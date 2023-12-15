@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from ipaddress import ip_address
 from fastapi.middleware.gzip import GZipMiddleware
+from src.articles import router as articles_router
 
 app = FastAPI()
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -18,10 +19,5 @@ async def add_ip_filter_middleware(request: Request, call_next):
         return JSONResponse(status_code=403, content='IP ERROR')
     return response
 
-@app.get("/protected")
-def protected_endpoint():
-    return {"message": "只有授权IP才能访问的API端点"}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+app.include_router(articles_router.router)
