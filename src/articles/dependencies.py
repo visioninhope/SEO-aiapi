@@ -1,8 +1,9 @@
 # router dependencies
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import init_beanie
 
-# async def valid_post_id(post_id: UUID4) -> Mapping:
-#     post = await service.get_by_id(post_id)
-#     if not post:
-#         raise PostNotFound()
-#
-#     return post
+
+# 初始化mongodb数据库
+async def init_db(db_name: str, models: list):
+    client = AsyncIOMotorClient("mongodb://localhost:27017")
+    await init_beanie(database=client[db_name], document_models=models)
