@@ -1,3 +1,4 @@
+# 主程序入口
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from ipaddress import ip_address
@@ -21,3 +22,5 @@ async def add_ip_filter_middleware(request: Request, call_next):
 
 
 app.include_router(articles_router.router)
+
+# uvicorn src.main:app --reload
