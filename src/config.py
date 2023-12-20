@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     openai_key: str | None
     # 允许访问的IP列表
     allowed_ips: list
-    default_db_name: str
+    db_name: str
 
     model_config = SettingsConfigDict(case_sensitive=True)
 
