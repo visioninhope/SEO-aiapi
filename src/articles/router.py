@@ -4,6 +4,8 @@ from src.config import settings
 from .dependencies import init_db
 from typing import Union
 from .models import Article
+from .models import ArticleTest
+from bson.objectid import ObjectId
 
 router = APIRouter(
     prefix='/article',
@@ -33,3 +35,12 @@ async def article_get(q: Union[str, None] = None,
     result = await result.skip(skip).limit(limit).to_list()
 
     return {"db_name": db_name, "num": num, "contents": result}
+
+@router.delete("/{id}", summary='删除文章', description="根据_id删除数据集articles中的文章")
+async def article_delete(id: str,
+                         db_name: Union[str, None] = None):
+    if not db_name: db_name = settings.db_name
+    await init_db(db_name, [ArticleTest])
+    result = await ArticleTest.find_one(ArticleTest.id == ObjectId(id)).delete()
+
+    return {"deleted_count": result.deleted_count, "raw_result": result.raw_result}
