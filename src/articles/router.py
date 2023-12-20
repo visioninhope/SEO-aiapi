@@ -15,7 +15,7 @@ router = APIRouter(
 async def article_get(q: Union[str, None] = None):
     result = None
     if q:
-        await init_db("ai", [Article])
+        await init_db(settings.default_db_name, [Article])
         result = await Article.find(Text(q)).count()
 
     return {"message": result}
