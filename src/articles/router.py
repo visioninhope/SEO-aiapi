@@ -11,7 +11,7 @@ router = APIRouter(
     tags = ['文章']
 )
 
-@router.get("/", summary='获取文章', description='根据关键词从数据库获取文章')
+@router.get("/", summary='获取文章', description='根据关键词从数据库获取文章，可选type为：mixed_rewrite, rewrite, original')
 async def article_get(q: Union[str, None] = None):
     result = None
     if q:
