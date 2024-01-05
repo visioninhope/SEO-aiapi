@@ -3,6 +3,9 @@ import pymongo
 from beanie import Document, Indexed
 from typing import Optional
 from datetime import datetime
+from typing import Union
+from src.config import settings
+
 
 class Article(Document):
     keyword: Indexed(str, index_type=pymongo.TEXT)
@@ -10,7 +13,6 @@ class Article(Document):
     source: Optional[str] = None
     create_date: datetime = datetime.now()
     content: str
-
 
     class Settings:
         name = "articles"
@@ -21,7 +23,6 @@ class ArticleTest(Document):
     source: Optional[str] = None
     create_date: datetime = datetime.now()
     content: str
-
 
     class Settings:
         name = "articles_test"

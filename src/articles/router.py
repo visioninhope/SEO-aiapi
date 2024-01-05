@@ -3,9 +3,9 @@ from fastapi import APIRouter
 from src.config import settings
 from .dependencies import init_db
 from typing import Union
-from .models import Article
-from .models import ArticleTest
 from bson.objectid import ObjectId
+from .models import Article, ArticleTest
+from .schemas import ArticleParam
 
 router = APIRouter(
     prefix='/article',
@@ -31,16 +31,14 @@ async def article_get(q: Union[str, None] = None,
     if type:
         result = result.find({"type": type})
 
-    num = await result.count()
+    total = await result.count()
     result = await result.skip(skip).limit(limit).to_list()
 
-    return {"db_name": db_name, "num": num, "contents": result}
+    return {"db_name": db_name, "type": type, "total": total, "skip": skip, "limit": limit, "contents": result}
 
-@router.delete("/{id}", summary='删除文章', description="根据_id删除数据集articles中的文章")
-async def article_delete(id: str,
-                         db_name: Union[str, None] = None):
-    if not db_name: db_name = settings.db_name
-    await init_db(db_name, [ArticleTest])
-    result = await ArticleTest.find_one(ArticleTest.id == ObjectId(id)).delete()
+@router.post("/delete", summary='删除文章', description="根据_id删除数据集articles中的文章")
+async def article_delete(body: ArticleParam):
+    await init_db(body.db_name, [Article])
+    result = await Article.find_one(Article.id == ObjectId(body.id)).delete()
 
     return {"deleted_count": result.deleted_count, "raw_result": result.raw_result}

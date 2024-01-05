@@ -17,12 +17,12 @@ async def add_ip_filter_middleware(request: Request, call_next):
     response = await call_next(request)
     client_ip = ip_address(request.client.host)
     if client_ip not in [ip_address(ip) for ip in settings.allowed_ips]:
-        return JSONResponse(status_code=403, content='IP ERROR')
+        return JSONResponse(status_code=403, content='IP ERROR' + str(client_ip))
     return response
 
 
 app.include_router(articles_router.router)
 
-# 启动命令 uvicorn src.main:app --reload 或直接运行该文件
+# 启动命令 uvicorn src.main:app --reload --host 0.0.0.0 或直接运行该文件， --host 0.0.0.0 是为了本地程序可以连接，需要用本地ip：http://192.168.0.196:8000
 if __name__ == '__main__':
     uvicorn.run("main:app", port=8000, reload=True)
