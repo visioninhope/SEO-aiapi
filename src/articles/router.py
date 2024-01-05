@@ -1,11 +1,11 @@
 from beanie.odm.operators.find.evaluation import Text
 from fastapi import APIRouter
-from src.config import settings
-from .dependencies import init_db
+from ..dependencies import init_db
 from typing import Union
 from bson.objectid import ObjectId
 from .models import Article, ArticleTest
 from .schemas import ArticleParam
+from src.config import settings
 
 router = APIRouter(
     prefix='/article',
@@ -20,7 +20,6 @@ async def article_get(q: Union[str, None] = None,
                       skip: Union[int, str] = 0,
                       limit: Union[int, str] = 10,
                       db_name: Union[str, None] = None):
-    if not db_name: db_name = settings.db_name
     await init_db(db_name, [Article])
 
     # 转换接收的字符串为数字
@@ -41,7 +40,7 @@ async def article_get(q: Union[str, None] = None,
     total = await result.count()
     result = await result.skip(skip).limit(limit).to_list()
 
-    return {"db_name": db_name, "type": type, "total": total, "skip": skip, "limit": limit, "contents": result}
+    return {"db_name": db_name, "type": type, "total": total, "skip": skip, "limit": limit, "db_list": settings.optional_db_list, "contents": result}
 
 @router.post("/delete", summary='删除文章', description="根据_id删除数据集articles中的文章")
 async def article_delete(body: ArticleParam):
