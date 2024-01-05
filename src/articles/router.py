@@ -17,11 +17,18 @@ router = APIRouter(
             description='根据关键词从数据库获取文章，参数列表：q, type, skip, limit, db_name。可选type为：mixed_rewrite, rewrite, original')
 async def article_get(q: Union[str, None] = None,
                       type: Union[str, None] = None,
-                      skip: Union[int, None] = 0,
-                      limit: Union[int, None] = 10,
+                      skip: Union[int, str] = 0,
+                      limit: Union[int, str] = 10,
                       db_name: Union[str, None] = None):
     if not db_name: db_name = settings.db_name
     await init_db(db_name, [Article])
+
+    # 转换接收的字符串为数字
+    if skip=="": skip = 0
+    else: skip = int(skip)
+    if limit=="": limit = 10
+    else: limit = int(limit)
+    if limit > 30: limit = 30
 
     if q:
         result = Article.find(Text(q))
