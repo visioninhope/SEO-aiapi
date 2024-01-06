@@ -5,6 +5,7 @@ from src.config import settings
 
 # 用于Document的查找，删除，修改
 class DocumentParam(BaseModel):
-    id: str # 变量为_id会无效
+    id: Optional[str] = None # 变量为_id会无效
     db_name: Union[str, None] = settings.db_name
     content: Optional[str] = ''
+    source: Optional[str] = ''

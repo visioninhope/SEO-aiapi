@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from beanie.odm.operators.find.evaluation import Text
 from fastapi import APIRouter
 from src.config import settings
@@ -38,7 +40,7 @@ async def document_get(q: Union[str, None] = None,
         result = DocumentTest.find({"source": source})
 
     total = await result.count()
-    result = await result.skip(skip).limit(limit).to_list()
+    result = await result.sort(-DocumentTest.create_date).skip(skip).limit(limit).to_list()
 
     return {"q": q,"db_name": db_name, "source": source, "total": total, "skip": skip, "limit": limit, "db_list": settings.optional_db_list, "data": result}
 
@@ -58,6 +60,14 @@ async def document_update(body: DocumentParam):
 
     return {"raw_result": result.raw_result}
 
+
+@router.post("/create", summary='新建资料', description="根据新内容新建资料，并存入矢量数据库")
+async def document_update(body: DocumentParam):
+    await init_db(body.db_name, [DocumentTest])
+    document = DocumentTest(source=body.source, embed=False, create_date=datetime.now(), content=body.content)
+    await document.create()
+
+    return True
 
 
 @router.post("/exclude_words/delete", summary='删除否定词',
