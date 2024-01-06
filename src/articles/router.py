@@ -40,7 +40,7 @@ async def article_get(q: Union[str, None] = None,
     total = await result.count()
     result = await result.skip(skip).limit(limit).to_list()
 
-    return {"db_name": db_name, "type": type, "total": total, "skip": skip, "limit": limit, "db_list": settings.optional_db_list, "contents": result}
+    return {"q": q, "db_name": db_name, "type": type, "total": total, "skip": skip, "limit": limit, "db_list": settings.optional_db_list, "data": result}
 
 @router.post("/delete", summary='删除文章', description="根据_id删除数据集articles中的文章")
 async def article_delete(body: ArticleParam):

@@ -1,14 +1,13 @@
 # for db models
 import pymongo
 from beanie import Document, Indexed
-from typing import Optional
+from typing import Optional, Annotated
 from datetime import datetime
-from typing import Union
 from src.config import settings
 
 
 class Article(Document):
-    keyword: Indexed(str, index_type=pymongo.TEXT)
+    keyword: Annotated[str, Indexed(index_type=pymongo.TEXT)]
     type: Optional[str] = None
     source: Optional[str] = None
     create_date: datetime = datetime.now()
@@ -18,7 +17,7 @@ class Article(Document):
         name = "articles"
 
 class ArticleTest(Document):
-    keyword: Indexed(str, index_type=pymongo.TEXT)
+    keyword: Annotated[str, Indexed(index_type=pymongo.TEXT)]
     type: Optional[str] = None
     source: Optional[str] = None
     create_date: datetime = datetime.now()
