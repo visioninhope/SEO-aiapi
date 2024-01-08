@@ -21,25 +21,14 @@ router = APIRouter(
             description='获取可选数据库列表，否定词列表，该数据库已录入总数')
 async def document_get(q: Union[str, None] = None,
                       source: Union[str, None] = None,
-                      skip: Union[int, str] = 0,
-                      limit: Union[int, str] = 10,
+                       skip: int = 0,
+                       limit: int = 10,
                       db_name: Union[str, None] = None):
     await init_db(db_name, [DocumentTest])
 
-    # 转换接收的字符串为数字
-    if skip=="": skip = 0
-    else: skip = int(skip)
-    if limit=="": limit = 10
-    else: limit = int(limit)
     if limit > 30: limit = 30
-
-    if q:
-        result = DocumentTest.find(Text(q))
-    else:
-        result = DocumentTest.find({})
-
-    if source:
-        result = DocumentTest.find({"source": source})
+    result = DocumentTest.find(Text(q)) if q else DocumentTest.find({})
+    if source: result = DocumentTest.find({"source": source})
 
     total = await result.count()
     result = await result.sort(-DocumentTest.create_date).skip(skip).limit(limit).to_list()

@@ -7,7 +7,7 @@ from src.documents.models import Document
 
 class DocumentListOut(BaseModel):
     q: str | None = None
-    db_name: str | None = settings.db_name
+    db_name: str | None = None
     source: str | None = None
     total: int
     skip: int
@@ -18,18 +18,18 @@ class DocumentListOut(BaseModel):
 
 # 用于Document的删除
 class DocumentDeleteIn(BaseModel):
-    id: str | None = None # 变量为_id会无效
-    db_name: str | None = settings.db_name
+    id: str # 变量为_id会无效
+    db_name: str | None = None
 
 # 用于Document的修改
 class DocumentUpdateIn(BaseModel):
-    id: str | None = None # 变量为_id会无效
-    db_name: str | None = settings.db_name
+    id: str # 变量为_id会无效
+    db_name: str | None = None
     content: Optional[str] = ''
 
 # 用于Document的新建
 class DocumentCreateIn(BaseModel):
-    db_name: str | None = settings.db_name
+    db_name: str | None = None
     content: Optional[str] = ''
     source: Optional[str] = ''
 
