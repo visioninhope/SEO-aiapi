@@ -1,9 +1,24 @@
 # for pydantic models，主要是post，put的请求体
 from pydantic import BaseModel
-from typing import Union
+from src.articles.models import Article
 from src.config import settings
 
-# 用于Article的查找，删除，修改
-class ArticleParam(BaseModel):
+# Article列表页的返回值
+class ArticleListOut(BaseModel):
+    q: str | None = None
+    db_name: str | None = settings.db_name
+    type: str | None = None
+    total: int
+    skip: int
+    limit: int
+    db_list: list[str] = settings.optional_db_list
+    data: list[Article]
+
+# 用于Article的删除的输入值
+class ArticleDeleteIn(BaseModel):
     id: str # 变量为_id会无效
-    db_name: Union[str, None] = settings.db_name
+    db_name: str | None = settings.db_name
+
+# 删除Article的返回值
+class ArticleDeleteOut(BaseModel):
+    raw_result: dict | str

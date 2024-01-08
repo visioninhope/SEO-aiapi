@@ -4,7 +4,7 @@ from ..dependencies import init_db
 from typing import Union
 from bson.objectid import ObjectId
 from .models import Article, ArticleTest
-from .schemas import ArticleParam
+from .schemas import ArticleListOut, ArticleDeleteOut, ArticleDeleteIn
 from src.config import settings
 
 router = APIRouter(
@@ -13,7 +13,9 @@ router = APIRouter(
 )
 
 
-@router.get("/", summary='获取文章',
+@router.get("/",
+            response_model=ArticleListOut,
+            summary='获取文章',
             description='根据关键词从数据库获取文章，参数列表：q, type, skip, limit, db_name。可选type为：mixed_rewrite, rewrite, original')
 async def article_get(q: Union[str, None] = None,
                       type: Union[str, None] = None,
@@ -29,22 +31,19 @@ async def article_get(q: Union[str, None] = None,
     else: limit = int(limit)
     if limit > 30: limit = 30
 
-    if q:
-        result = Article.find(Text(q))
-    else:
-        result = Article.find({})
+    if q: result = Article.find(Text(q))
+    else: result = Article.find({})
 
-    if type:
-        result = result.find({"type": type})
+    if type: result = result.find({"type": type})
 
     total = await result.count()
     result = await result.sort(-Article.create_date).skip(skip).limit(limit).to_list()
 
-    return {"q": q, "db_name": db_name, "type": type, "total": total, "skip": skip, "limit": limit, "db_list": settings.optional_db_list, "data": result}
+    return {"q": q, "db_name": db_name, "type": type, "total": total, "skip": skip, "limit": limit, "data": result}
 
-@router.post("/delete", summary='删除文章', description="根据_id删除数据集articles中的文章")
-async def article_delete(body: ArticleParam):
-    await init_db(body.db_name, [Article])
-    result = await Article.find_one(Article.id == ObjectId(body.id)).delete()
+@router.post("/delete", response_model=ArticleDeleteOut, summary='删除文章', description="根据_id删除数据集articles中的文章")
+async def article_delete(body: ArticleDeleteIn):
+    await init_db(body.db_name, [ArticleTest])
+    result = await ArticleTest.find_one(ArticleTest.id == ObjectId(body.id)).delete()
 
-    return {"deleted_count": result.deleted_count, "raw_result": result.raw_result}
+    return {"raw_result": result.raw_result}

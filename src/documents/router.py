@@ -7,7 +7,7 @@ from ..dependencies import init_db
 from typing import Union
 from bson.objectid import ObjectId
 from .models import Document, DocumentTest
-from .schemas import DocumentParam
+from .schemas import DocumentListOut, DocumentDeleteIn, DocumentUpdateIn, DocumentCreateIn, DocumentResultOut
 
 router = APIRouter(
     prefix='/document',
@@ -15,7 +15,9 @@ router = APIRouter(
 )
 
 
-@router.get("/", summary='资料管理页',
+@router.get("/",
+            response_model=DocumentListOut,
+            summary='获取资料列表',
             description='获取可选数据库列表，否定词列表，该数据库已录入总数')
 async def document_get(q: Union[str, None] = None,
                       source: Union[str, None] = None,
@@ -42,32 +44,32 @@ async def document_get(q: Union[str, None] = None,
     total = await result.count()
     result = await result.sort(-DocumentTest.create_date).skip(skip).limit(limit).to_list()
 
-    return {"q": q,"db_name": db_name, "source": source, "total": total, "skip": skip, "limit": limit, "db_list": settings.optional_db_list, "data": result}
+    return {"q": q,"db_name": db_name, "source": source, "total": total, "skip": skip, "limit": limit, "data": result}
 
 
-@router.post("/delete", summary='删除该资料', description="根据_id删除该资料，并同步删除矢量数据库中的同源数据")
-async def document_delete(body: DocumentParam):
+@router.post("/delete", response_model=DocumentResultOut, summary='删除该资料', description="根据_id删除该资料，并同步删除矢量数据库中的同源数据")
+async def document_delete(body: DocumentDeleteIn):
     await init_db(body.db_name, [DocumentTest])
     result = await DocumentTest.find_one(DocumentTest.id == ObjectId(body.id)).delete()
 
-    return {"deleted_count": result.deleted_count, "raw_result": result.raw_result}
+    return {"raw_result": result.raw_result}
 
 
-@router.post("/update", summary='修改该资料', description="根据_id和新内容修改该资料，并同步修改矢量数据库中的同源数据（需要先删除原有，再矢量化）")
-async def document_update(body: DocumentParam):
+@router.post("/update", response_model=DocumentResultOut, summary='修改该资料', description="根据_id和新内容修改该资料，并同步修改矢量数据库中的同源数据（需要先删除原有，再矢量化）")
+async def document_update(body: DocumentUpdateIn):
     await init_db(body.db_name, [DocumentTest])
     result = await DocumentTest.find_one(DocumentTest.id == ObjectId(body.id)).update({"$set": {DocumentTest.content: body.content}})
 
     return {"raw_result": result.raw_result}
 
 
-@router.post("/create", summary='新建资料', description="根据新内容新建资料，并存入矢量数据库")
-async def document_update(body: DocumentParam):
+@router.post("/create", response_model=DocumentResultOut, summary='新建资料', description="根据新内容新建资料，并存入矢量数据库")
+async def document_update(body: DocumentCreateIn):
     await init_db(body.db_name, [DocumentTest])
     document = DocumentTest(source=body.source, embed=False, create_date=datetime.now(), content=body.content)
     await document.create()
 
-    return True
+    return {"raw_result": {"n": 1, "ok": 1}}
 
 
 @router.post("/exclude_words/delete", summary='删除否定词',
@@ -76,12 +78,3 @@ async def get(content: str,
                       db_name: Union[str, None] = None):
     return 1
 
-@router.post("/", summary='录入资料',
-            description='先存入 mongodb 的 documents 文档集，然后录入矢量数据库')
-async def save(content: str,
-                      db_name: Union[str, None] = None):
-    await init_db(db_name, [Document])
-
-    # result = await result.skip(skip).limit(limit).to_list()
-
-    return 1

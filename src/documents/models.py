@@ -10,8 +10,8 @@ from src.config import settings
 class Document(Document):
     source: Annotated[str, Indexed(unique=True)]
     create_date: datetime = datetime.now()
-    content: Annotated[str, Indexed(index_type=pymongo.TEXT)]
     embed: bool = False
+    content: Annotated[str, Indexed(index_type=pymongo.TEXT)]
 
     class Settings:
         name = "documents"
@@ -19,8 +19,8 @@ class Document(Document):
 class DocumentTest(Document):
     source: Annotated[str, Indexed(unique=True)]
     create_date: datetime = datetime.now()
-    content: Annotated[str, Indexed(index_type=pymongo.TEXT)]
     embed: bool = False
+    content: Annotated[str, Indexed(index_type=pymongo.TEXT)]
 
     class Settings:
         name = "documents_test"
