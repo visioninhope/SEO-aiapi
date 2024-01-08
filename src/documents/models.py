@@ -3,11 +3,10 @@ import pymongo
 from beanie import Document, Indexed
 from typing import Optional, Annotated
 from datetime import datetime
-from typing import Union
 from src.config import settings
 
 
-class Document(Document):
+class MyDocument(Document):
     source: Annotated[str, Indexed(unique=True)]
     create_date: datetime = datetime.now()
     embed: bool = False
@@ -27,9 +26,9 @@ class DocumentTest(Document):
 
 class Config(Document):
     key: Annotated[str, Indexed(unique=True)]
-    name: Optional[str] = None
-    excerpt: Optional[str] = None
-    value: Optional[str] = None
+    value: Optional[str] = ''
+    name: Optional[str] = ''
+    excerpt: Optional[str] = ''
 
     class Settings:
         name = "configs"

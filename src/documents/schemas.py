@@ -2,7 +2,7 @@
 from pydantic import BaseModel
 from typing import Union, Optional
 from src.config import settings
-from src.documents.models import Document
+from src.documents.models import MyDocument
 
 
 class DocumentListOut(BaseModel):
@@ -13,7 +13,8 @@ class DocumentListOut(BaseModel):
     skip: int
     limit: int
     db_list: list[str] = settings.optional_db_list
-    data: list[Document]
+    data: list[MyDocument]
+    negative_keywords: str | None = None
 
 
 # 用于Document的删除
@@ -33,6 +34,12 @@ class DocumentCreateIn(BaseModel):
     content: Optional[str] = ''
     source: Optional[str] = ''
 
-# Document 删除，修改，新建结果：{}
-class DocumentResultOut(BaseModel):
+
+class NegativeKeywordsUpdateIn(BaseModel):
+    db_name: str | None = None
+    value: str | None = ''
+
+
+# DB 删除，修改，新建结果：{}
+class DBResultOut(BaseModel):
     raw_result: dict | str
