@@ -20,11 +20,13 @@ class DocumentListOut(BaseModel):
 # 用于Document的删除
 class DocumentDeleteIn(BaseModel):
     id: str # 变量为_id会无效
+    source: str
     db_name: str | None = None
 
 # 用于Document的修改
 class DocumentUpdateIn(BaseModel):
     id: str # 变量为_id会无效
+    source: str
     db_name: str | None = None
     content: Optional[str] = ''
 
@@ -32,7 +34,7 @@ class DocumentUpdateIn(BaseModel):
 class DocumentCreateIn(BaseModel):
     db_name: str | None = None
     content: Optional[str] = ''
-    source: Optional[str] = ''
+    source: str
 
 
 class NegativeKeywordsUpdateIn(BaseModel):

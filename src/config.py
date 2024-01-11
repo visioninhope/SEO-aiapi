@@ -4,11 +4,14 @@ from dotenv import find_dotenv, load_dotenv
 load_dotenv(find_dotenv(".env"))
 
 class Settings(BaseSettings):
-    openai_key: str | None
+    openai_api_key: str | None
     # 允许访问的IP列表
     allowed_ips: list
     db_name: str
     optional_db_list: list
+    chroma_persist_directory : str
+    chunk_size: int
+    chunk_overlap: int
 
     model_config = SettingsConfigDict(case_sensitive=True)
 

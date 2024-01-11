@@ -1,6 +1,6 @@
 from beanie.odm.operators.find.evaluation import Text
 from fastapi import APIRouter
-from ..dependencies import init_db
+from ..utils import init_db
 from typing import Union
 from bson.objectid import ObjectId
 from .models import Article, ArticleTest
