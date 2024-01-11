@@ -12,6 +12,7 @@ class DocumentListOut(BaseModel):
     total: int
     skip: int
     limit: int
+    chunk_size: int
     db_list: list[str] = settings.optional_db_list
     data: list[MyDocument]
     negative_keywords: str | None = None
@@ -27,11 +28,13 @@ class DocumentDeleteIn(BaseModel):
 class DocumentUpdateIn(BaseModel):
     id: str # 变量为_id会无效
     source: str
+    chunk_size: int | None = settings.chunk_size
     db_name: str | None = None
     content: Optional[str] = ''
 
 # 用于Document的新建
 class DocumentCreateIn(BaseModel):
+    chunk_size: int | None = settings.chunk_size
     db_name: str | None = None
     content: Optional[str] = ''
     source: str

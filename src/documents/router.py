@@ -41,7 +41,7 @@ async def document_get(q: Union[str, None] = None,
     # 获取否定关键词列表
     negative_keywords = await Config.find_one(Config.key == 'negative_keywords')
 
-    return {"q": q,"db_name": db_name, "source": source, "total": total, "skip": skip, "limit": limit, "data": result, "negative_keywords": negative_keywords.value}
+    return {"q": q,"db_name": db_name, "source": source, "total": total, "skip": skip, "limit": limit, "data": result, "chunk_size": settings.chunk_size, "negative_keywords": negative_keywords.value}
 
 
 @router.post("/delete", response_model=DBResultOut, summary='删除该资料', description="根据资料_id删除该资料，并同步删除矢量数据库中的同源数据")
@@ -58,7 +58,7 @@ async def document_delete(body: DocumentDeleteIn):
 @router.post("/update", response_model=DBResultOut, summary='修改该资料', description="根据_id和新内容修改该资料，并同步修改矢量数据库中的同源数据（需要先删除原有，再矢量化）")
 async def document_update(body: DocumentUpdateIn):
     delete_from_chroma_by_source(body.source)
-    await text_splitter_and_save_to_chroma([body.content],body.source)
+    await text_splitter_and_save_to_chroma([body.content], body.source, body.chunk_size)
 
     # mongodb更新记录
     await init_db(body.db_name, [DocumentTest])
@@ -69,7 +69,7 @@ async def document_update(body: DocumentUpdateIn):
 
 @router.post("/create", response_model=DBResultOut, summary='新建资料', description="分割新资料并存入矢量数据库，然后记录在mongodb中")
 async def document_update(body: DocumentCreateIn):
-    await text_splitter_and_save_to_chroma([body.content], body.source)
+    await text_splitter_and_save_to_chroma([body.content], body.source, body.chunk_size)
 
     # mongodb新建记录
     await init_db(body.db_name, [DocumentTest])
