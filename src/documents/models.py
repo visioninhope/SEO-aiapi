@@ -24,6 +24,13 @@ class DocumentTest(Document):
     class Settings:
         name = "documents_test"
 
+
+class RagPromptLog(Document):
+    system_prompt: str
+    topic: str
+    answer: str
+    context: Optional[str] = ''
+
 class Config(Document):
     key: Annotated[str, Indexed(unique=True)]
     value: Optional[str] = ''

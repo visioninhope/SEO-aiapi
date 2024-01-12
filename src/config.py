@@ -5,6 +5,7 @@ load_dotenv(find_dotenv(".env"))
 
 class Settings(BaseSettings):
     openai_api_key: str | None
+    cohere_api_key: str | None
     # 允许访问的IP列表
     allowed_ips: list
     db_name: str
