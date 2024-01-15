@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     cohere_api_key: str | None
     # 允许访问的IP列表
     allowed_ips: list
+    deeplx_base_urls: list
+    google_trans_api_key: str
     db_name: str
     optional_db_list: list
     chroma_persist_directory : str
