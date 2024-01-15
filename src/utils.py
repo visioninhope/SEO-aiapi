@@ -36,7 +36,7 @@ def trans_by_deepl(text: str, source_lang: str = "EN", target_lang: str = "ES"):
         # url = random.choice(settings.deeplx_base_urls)
         url = "https://api.deeplx.org/translate"
         try:
-            response = requests.request("POST",url , headers=headers, data=payload, timeout=3)
+            response = requests.request("POST",url , headers=headers, data=payload)
             if json.loads(response.text)['code'] == 200:
                 print("翻译成功 - " + url)
                 break

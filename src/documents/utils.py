@@ -3,6 +3,8 @@ import os
 from typing import Dict, Union
 
 import chromadb
+from langchain.retrievers import MultiQueryRetriever, ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import CohereRerank
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_core.exceptions import OutputParserException
@@ -11,13 +13,14 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough, RunnableParallel
 from langchain_core.runnables.utils import Output
 from langchain_google_genai import GoogleGenerativeAI
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from src.config import settings
 from dotenv import load_dotenv, find_dotenv
 
-from src.documents.schemas import ParserEnum
+from src.documents.schemas import ParserEnum, RetrieverTypeEnum
 
 load_dotenv(find_dotenv(), override=True)
+
 
 # 从chroma删除source匹配的记录
 def delete_from_chroma_by_source(source: str):
@@ -28,7 +31,7 @@ def delete_from_chroma_by_source(source: str):
 
 # 分割文本，并存入chroma，添加source
 async def text_splitter_and_save_to_chroma(text: list[str], source: str, chunk_size: int):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_size*0.2)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_size * 0.2)
     documents = text_splitter.create_documents(text, [{"source": source}])
     await Chroma.afrom_documents(documents, OpenAIEmbeddings(),
                                  persist_directory=settings.chroma_persist_directory)
@@ -38,16 +41,30 @@ def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 
-# 简单rag，需要提供topic和system_message_prompt。parser_type有str和json2种选择，fetch_k为矢量数据库mmr搜索拿到的数据总数，k为返回的数量
-async def rag_topic_to_answer(topic: str,
-                              system_message_prompt: str,
-                              parser_type: ParserEnum,
-                              model_name: Union[str, None] = "gemini-pro",
-                              fetch_k: int = 10,
-                              k: int = 3):
+# 简单rag，需要提供topic和system_message_prompt。parser_type即返回值有str和json2种选择，fetch_k为矢量数据库mmr搜索拿到的数据总数，k为返回的数量，MultiQuery模式为最复杂模式，首先生成3个额外查询，然后用mmr搜索到结果，最终用cohere排序
+async def rag_topic_to_answer_by_gemini(topic: str,
+                                        system_message_prompt: str,
+                                        retriever_type: RetrieverTypeEnum = "mmr",
+                                        parser_type: ParserEnum = "str",
+                                        fetch_k: int = 10,
+                                        k: int = 3):
     retriever = Chroma(embedding_function=OpenAIEmbeddings(),
-                       persist_directory=os.environ.get("CHROMA_PERSIST_DIRECTORY")).as_retriever(search_type="mmr", search_kwargs={"fetch_k": fetch_k, "k": k})
-    llm = GoogleGenerativeAI(model=model_name, max_output_tokens=256, request_timeout=300)
+                       persist_directory=os.environ.get("CHROMA_PERSIST_DIRECTORY")).as_retriever(search_type="mmr",
+                                                                                                  search_kwargs={
+                                                                                                      "fetch_k": fetch_k,
+                                                                                                      "k": k})
+
+    llm_for_multi_query = ChatOpenAI()
+    llm = GoogleGenerativeAI(model="gemini-pro", max_output_tokens=2048)
+
+    if retriever_type == RetrieverTypeEnum.multi_query:
+        retriever = MultiQueryRetriever.from_llm(
+            retriever=retriever, llm=llm_for_multi_query
+        )
+        compressor = CohereRerank(top_n=k + 1)
+        retriever = ContextualCompressionRetriever(
+            base_compressor=compressor, base_retriever=retriever
+        )
 
     chat_template = ChatPromptTemplate.from_messages(
         [
@@ -56,8 +73,8 @@ async def rag_topic_to_answer(topic: str,
         ],
     )
 
-    parser = JsonOutputParser()
-    if parser_type == "json": parser = StrOutputParser()
+    parser = StrOutputParser()
+    if parser_type == "json": parser = JsonOutputParser()
     rag_chain_from_docs = (
             RunnablePassthrough.assign(context=(lambda x: format_docs(x["context"])))
             | chat_template

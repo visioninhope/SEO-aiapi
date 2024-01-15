@@ -54,3 +54,7 @@ class DBResultOut(BaseModel):
 class ParserEnum(str, Enum):
     str = "str"
     json = "json"
+
+class RetrieverTypeEnum(str, Enum):
+    mmr = "mmr"
+    multi_query = "MultiQuery"

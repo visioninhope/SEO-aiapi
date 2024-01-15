@@ -8,12 +8,11 @@ from typing import Union
 from bson.objectid import ObjectId
 from .models import MyDocument, DocumentTest, Config
 from .schemas import DocumentListOut, DocumentDeleteIn, DocumentUpdateIn, DocumentCreateIn, DBResultOut, \
-    NegativeKeywordsUpdateIn, ParserEnum
+    NegativeKeywordsUpdateIn, ParserEnum, RetrieverTypeEnum
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from .utils import delete_from_chroma_by_source, text_splitter_and_save_to_chroma, rag_topic_to_answer
-
+from .utils import delete_from_chroma_by_source, text_splitter_and_save_to_chroma, rag_topic_to_answer_by_gemini
 
 router = APIRouter(
     prefix='/document',
@@ -91,7 +90,7 @@ async def negative_keywords_update(body: NegativeKeywordsUpdateIn):
 
 
 @router.get("/test", summary="测试页面")
-async def test(topic: str = "What is Isostatic press?", parser_type: ParserEnum = "str"):
+async def test(topic: str = "What is Isostatic press?", parser_type: ParserEnum = "str", retriever_type: RetrieverTypeEnum = "mmr"):
     parser_types = ParserEnum.__members__.items() # 获取枚举全部对象
     system_message_chroma_to_outline = """
     Use the following steps to respond to user inputs. do not output steps, only output results.
@@ -99,6 +98,6 @@ async def test(topic: str = "What is Isostatic press?", parser_type: ParserEnum 
     Step 2:Write an blog title and outline as detailed as possible for the topic "{topic}" referring to the contexts. The outline should be able to deduce the point of view of the title step by step. "Introduction" and "Conclusion" sections do not require subheadings, don't miss key information. 
     Step 3:Output the outline by JSON object structured like:{{"title": "", "sections": [{{"heading": "","subheading":[""]}}]}}
     """
-    result = await rag_topic_to_answer(topic, system_message_chroma_to_outline, parser_type)
+    result = await rag_topic_to_answer_by_gemini(topic, system_message_chroma_to_outline, retriever_type, parser_type)
 
     return result
