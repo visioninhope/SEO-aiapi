@@ -9,7 +9,9 @@ from src.articles import router as articles_router
 from src.documents import router as documents_router
 from src.adventures import router as adventures_router
 from src.config import settings
+import logging
 
+logging.basicConfig(filename='storage/logs/app.log', format='%(asctime)s: %(levelname)s - %(message)s')
 
 app = FastAPI()
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -20,12 +22,13 @@ async def add_ip_filter_middleware(request: Request, call_next):
     response = await call_next(request)
     client_ip = ip_address(request.client.host)
     if client_ip not in [ip_address(ip) for ip in settings.allowed_ips]:
-        return JSONResponse(status_code=403, content='IP ERROR' + str(client_ip))
+        return JSONResponse(status_code=403, content='IP ERROR - ' + str(client_ip))
     return response
 
 # 通用异常捕获
 @app.exception_handler(Exception)
 async def validation_exception_handler(request: Request, e: Exception):
+    logging.error(str(e))
     return JSONResponse(status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR, content={'message': str(e)})
 
 app.include_router(articles_router.router)

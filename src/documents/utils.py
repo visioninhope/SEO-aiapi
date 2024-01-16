@@ -1,7 +1,5 @@
 # non-business logic functions, e.g. response normalization, data enrichment, etc.
 import os
-from typing import Dict, Union
-
 import chromadb
 from langchain.retrievers import MultiQueryRetriever, ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import CohereRerank
@@ -11,13 +9,14 @@ from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough, RunnableParallel
-from langchain_core.runnables.utils import Output
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from src.adventures.models import Adventure
 from src.config import settings
 from dotenv import load_dotenv, find_dotenv
-
-from src.documents.schemas import ParserEnum, RetrieverTypeEnum, ModelNameEnum
+from src.documents.schemas import ParserEnum, RetrieverTypeEnum, ModelNameEnum, RagIn
+from src.utils import init_db
+from datetime import datetime
 
 load_dotenv(find_dotenv(), override=True)
 
@@ -101,5 +100,27 @@ async def rag_topic_to_answer_by_gemini(topic: str,
             else:
                 raise
         break
+
+    return result
+
+# 生成rag内容并保存在mongodb
+async def rag_and_save(data: RagIn):
+    result = await rag_topic_to_answer_by_gemini(data.topic, data.system_message_prompt, data.llm_model_name,
+                                                 data.retriever_type, data.parser_type, data.fetch_k, data.k)
+
+    await init_db(settings.db_name, [Adventure])
+    context_dict = [{"page_content": doc.page_content, "metadata": doc.metadata} for doc in result["context"]]
+    db_data = Adventure(topic=data.topic, answer=result["answer"], context=context_dict,
+                        system_message_prompt=data.system_message_prompt, llm_model_name=data.llm_model_name,
+                        retriever_type=data.retriever_type, parser_type=data.parser_type, fetch_k=data.fetch_k,
+                        k=data.k, create_date=datetime.now())
+    await db_data.insert()
+
+    result["system_message_prompt"] = data.system_message_prompt
+    result["llm_model_name"] = data.llm_model_name
+    result["retriever_type"] = data.retriever_type
+    result["parser_type"] = data.parser_type
+    result["fetch_k"] = data.fetch_k
+    result["k"] = data.k
 
     return result
