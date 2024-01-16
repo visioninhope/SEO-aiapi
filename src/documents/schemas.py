@@ -1,4 +1,5 @@
 # for pydantic models，主要是post，put的请求体
+from langchain_core.documents import Document
 from pydantic import BaseModel
 from typing import Union, Optional, Dict, Any
 from src.config import settings
@@ -59,10 +60,17 @@ class RetrieverTypeEnum(str, Enum):
     mmr = "mmr"
     multi_query = "MultiQuery"
 
+# 可选的模型
+class ModelNameEnum(str, Enum):
+    gemini_pro = "gemini-pro"
+    gpt_3_5_turbo = "gpt-3.5-turbo"
+    gpt_3_5_turbo_16k = "gpt-3.5-turbo-16k"
+    gpt_4 = "gpt-4"
 
 class RagIn(BaseModel):
     topic: str
     system_message_prompt: str | None
+    llm_model_name: ModelNameEnum = ModelNameEnum.gemini_pro
     retriever_type: RetrieverTypeEnum = RetrieverTypeEnum.mmr
     parser_type: ParserEnum = ParserEnum.str
     fetch_k: int = settings.rag_default_fetch_k

@@ -17,7 +17,7 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from src.config import settings
 from dotenv import load_dotenv, find_dotenv
 
-from src.documents.schemas import ParserEnum, RetrieverTypeEnum
+from src.documents.schemas import ParserEnum, RetrieverTypeEnum, ModelNameEnum
 
 load_dotenv(find_dotenv(), override=True)
 
@@ -44,6 +44,7 @@ def format_docs(docs):
 # 简单rag，需要提供topic和system_message_prompt。parser_type即返回值有str和json2种选择，fetch_k为矢量数据库mmr搜索拿到的数据总数，k为返回的数量，MultiQuery模式为最复杂模式，首先生成3个额外查询，然后用mmr搜索到结果，最终用cohere排序
 async def rag_topic_to_answer_by_gemini(topic: str,
                                         system_message_prompt: str,
+                                        llm_model_name: ModelNameEnum = "gemini-pro",
                                         retriever_type: RetrieverTypeEnum = "mmr",
                                         parser_type: ParserEnum = "str",
                                         fetch_k: int = 10,
@@ -55,7 +56,10 @@ async def rag_topic_to_answer_by_gemini(topic: str,
                                                                                                       "k": k})
 
     llm_for_multi_query = ChatOpenAI()
-    llm = GoogleGenerativeAI(model="gemini-pro", max_output_tokens=2048)
+    if llm_model_name == ModelNameEnum.gemini_pro:
+        llm = GoogleGenerativeAI(model="gemini-pro", max_output_tokens=2048)
+    else:
+        llm = ChatOpenAI(model_name=llm_model_name, request_timeout=300)
 
     if retriever_type == RetrieverTypeEnum.multi_query:
         retriever = MultiQueryRetriever.from_llm(
