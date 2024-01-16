@@ -22,7 +22,7 @@ async def article_get(q: Union[str, None] = None,
                       limit: int = 10,
                       type: Union[str, None] = None,
                       db_name: Union[str, None] = None):
-    await init_db(db_name, [Article])
+    await init_db(settings.db_name, [Article])
 
     if limit > 30: limit = 30
     result = Article.find(Text(q)) if q else Article.find({})
@@ -31,7 +31,7 @@ async def article_get(q: Union[str, None] = None,
     total = await result.count()
     result = await result.sort(-Article.create_date).skip(skip).limit(limit).to_list()
 
-    return {"q": q, "db_name": db_name, "type": type, "total": total, "skip": skip, "limit": limit, "data": result}
+    return {"q": q, "db_name": settings.db_name, "type": type, "total": total, "skip": skip, "limit": limit, "data": result}
 
 @router.post("/delete", response_model=ArticleDeleteOut, summary='删除文章', description="根据_id删除数据集articles中的文章")
 async def article_delete(body: ArticleDeleteIn):

@@ -61,7 +61,7 @@ async def rag_topic_to_answer_by_gemini(topic: str,
         retriever = MultiQueryRetriever.from_llm(
             retriever=retriever, llm=llm_for_multi_query
         )
-        compressor = CohereRerank(top_n=k + 1)
+        compressor = CohereRerank(top_n=k)
         retriever = ContextualCompressionRetriever(
             base_compressor=compressor, base_retriever=retriever
         )

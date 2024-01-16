@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     chroma_persist_directory : str
     chunk_size: int
     chunk_overlap: int
+    rag_default_fetch_k: int
+    rag_default_k: int
 
     model_config = SettingsConfigDict(case_sensitive=True)
 

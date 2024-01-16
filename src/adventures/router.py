@@ -1,50 +1,21 @@
-from datetime import datetime
-from beanie.odm.operators.find.evaluation import Text
-from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter
-from src.config import settings
-from ..utils import init_db
-from typing import Union
-from bson.objectid import ObjectId
-from .models import MyDocument, DocumentTest, Config
 
+from ..config import settings
+from ..documents.schemas import RagIn, ParserEnum, RetrieverTypeEnum
+from ..documents.utils import rag_topic_to_answer_by_gemini
 
 
 router = APIRouter(
-    prefix='/document',
-    tags=['文档与数据库']
+    prefix='/adventure',
+    tags=['测试各种prompt与参数']
 )
 
+@router.get("/rag",  summary='Rag测试列表页', description="")
+async def rag_list():
+    return {"db_name": settings.db_name, "fetch_k": settings.rag_default_fetch_k, "k": settings.rag_default_k, "retriever_types": RetrieverTypeEnum.__members__.items(), "parser_types": ParserEnum.__members__.items()}
 
-@router.get("/",
-            response_model=DocumentListOut,
-            summary='获取资料列表',
-            description='获取可选数据库列表，否定词列表，该数据库已录入总数')
-async def document_get(q: Union[str, None] = None,
-                       source: Union[str, None] = None,
-                       skip: int = 0,
-                       limit: int = 10,
-                       db_name: Union[str, None] = None):
-    await init_db(db_name, [DocumentTest, Config])
-    # 获取资料列表与总数
-    if limit > 30: limit = 30
-    result = DocumentTest.find(Text(q)) if q else DocumentTest.find({})
-    if source: result = DocumentTest.find({"source": source})
-    total = await result.count()
-    result = await result.sort(-DocumentTest.create_date).skip(skip).limit(limit).to_list()
+@router.post("/rag", summary='Rag1问1答测试提交', description="system_message_prompt 中用 {topic} 代替话题存在的位置，第一句一般是：You will be provided with some contexts delimited by triple quotes. 这样就可以把context作为第一波用户输入自然而然的生成结果")
+async def rag_post(data: RagIn):
+    result = await rag_topic_to_answer_by_gemini(data.topic, data.system_message_prompt, data.retriever_type, data.parser_type, data.fetch_k, data.k)
 
-    # 获取否定关键词列表
-    negative_keywords = await Config.find_one(Config.key == 'negative_keywords')
-
-    return {"q": q,"db_name": db_name, "source": source, "total": total, "skip": skip, "limit": limit, "data": result, "chunk_size": settings.chunk_size, "negative_keywords": negative_keywords.value}
-
-
-@router.post("/delete", response_model=DBResultOut, summary='删除该资料', description="根据资料_id删除该资料，并同步删除矢量数据库中的同源数据")
-async def document_delete(body: DocumentDeleteIn):
-    delete_from_chroma_by_source(body.source)
-
-    # mongodb中删除记录
-    await init_db(body.db_name, [DocumentTest])
-    result = await DocumentTest.find_one(DocumentTest.id == ObjectId(body.id)).delete()
-
-    return {"raw_result": result.raw_result}
+    return result

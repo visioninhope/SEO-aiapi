@@ -1,6 +1,6 @@
 # for pydantic models，主要是post，put的请求体
 from pydantic import BaseModel
-from typing import Union, Optional
+from typing import Union, Optional, Dict, Any
 from src.config import settings
 from src.documents.models import MyDocument
 from enum import Enum
@@ -58,3 +58,12 @@ class ParserEnum(str, Enum):
 class RetrieverTypeEnum(str, Enum):
     mmr = "mmr"
     multi_query = "MultiQuery"
+
+
+class RagIn(BaseModel):
+    topic: str
+    system_message_prompt: str | None
+    retriever_type: RetrieverTypeEnum = RetrieverTypeEnum.mmr
+    parser_type: ParserEnum = ParserEnum.str
+    fetch_k: int = settings.rag_default_fetch_k
+    k: int = settings.rag_default_k
