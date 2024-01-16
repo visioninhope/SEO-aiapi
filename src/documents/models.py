@@ -15,15 +15,6 @@ class MyDocument(Document):
     class Settings:
         name = "documents"
 
-class DocumentTest(Document):
-    source: Annotated[str, Indexed(unique=True)]
-    create_date: datetime = datetime.now()
-    embed: bool = False
-    content: Annotated[str, Indexed(index_type=pymongo.TEXT)]
-
-    class Settings:
-        name = "documents_test"
-
 
 class RagPromptLog(Document):
     system_prompt: str

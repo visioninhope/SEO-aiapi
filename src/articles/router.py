@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from ..utils import init_db
 from typing import Union
 from bson.objectid import ObjectId
-from .models import Article, ArticleTest
+from .models import Article
 from .schemas import ArticleListOut, ArticleDeleteOut, ArticleDeleteIn
 from src.config import settings
 
@@ -35,7 +35,7 @@ async def article_get(q: Union[str, None] = None,
 
 @router.post("/delete", response_model=ArticleDeleteOut, summary='删除文章', description="根据_id删除数据集articles中的文章")
 async def article_delete(body: ArticleDeleteIn):
-    await init_db(body.db_name, [ArticleTest])
-    result = await ArticleTest.find_one(ArticleTest.id == ObjectId(body.id)).delete()
+    await init_db(body.db_name, [Article])
+    result = await Article.find_one(Article.id == ObjectId(body.id)).delete()
 
     return {"raw_result": result.raw_result}

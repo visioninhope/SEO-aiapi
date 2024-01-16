@@ -6,7 +6,7 @@ from src.config import settings
 from ..utils import init_db
 from typing import Union
 from bson.objectid import ObjectId
-from .models import MyDocument, DocumentTest, Config
+from .models import MyDocument, Config
 from .schemas import DocumentListOut, DocumentDeleteIn, DocumentUpdateIn, DocumentCreateIn, DBResultOut, \
     NegativeKeywordsUpdateIn, ParserEnum, RetrieverTypeEnum
 from langchain_core.output_parsers import StrOutputParser
@@ -29,13 +29,13 @@ async def document_get(q: Union[str, None] = None,
                        skip: int = 0,
                        limit: int = 10,
                        db_name: Union[str, None] = None):
-    await init_db(db_name, [DocumentTest, Config])
+    await init_db(db_name, [MyDocument, Config])
     # 获取资料列表与总数
     if limit > 30: limit = 30
-    result = DocumentTest.find(Text(q)) if q else DocumentTest.find({})
-    if source: result = DocumentTest.find({"source": source})
+    result = MyDocument.find(Text(q)) if q else MyDocument.find({})
+    if source: result = MyDocument.find({"source": source})
     total = await result.count()
-    result = await result.sort(-DocumentTest.create_date).skip(skip).limit(limit).to_list()
+    result = await result.sort(-MyDocument.create_date).skip(skip).limit(limit).to_list()
 
     # 获取否定关键词列表
     negative_keywords = await Config.find_one(Config.key == 'negative_keywords')
@@ -48,8 +48,8 @@ async def document_delete(body: DocumentDeleteIn):
     delete_from_chroma_by_source(body.source)
 
     # mongodb中删除记录
-    await init_db(body.db_name, [DocumentTest])
-    result = await DocumentTest.find_one(DocumentTest.id == ObjectId(body.id)).delete()
+    await init_db(body.db_name, [MyDocument])
+    result = await MyDocument.find_one(MyDocument.id == ObjectId(body.id)).delete()
 
     return {"raw_result": result.raw_result}
 
@@ -60,8 +60,8 @@ async def document_update(body: DocumentUpdateIn):
     await text_splitter_and_save_to_chroma([body.content], body.source, body.chunk_size)
 
     # mongodb更新记录
-    await init_db(body.db_name, [DocumentTest])
-    result = await DocumentTest.find_one(DocumentTest.id == ObjectId(body.id)).update(Set({DocumentTest.content: body.content, DocumentTest.embed: True}))
+    await init_db(body.db_name, [MyDocument])
+    result = await MyDocument.find_one(MyDocument.id == ObjectId(body.id)).update(Set({MyDocument.content: body.content, MyDocument.embed: True}))
 
     return {"raw_result": result.raw_result}
 
@@ -71,8 +71,8 @@ async def document_update(body: DocumentCreateIn):
     await text_splitter_and_save_to_chroma([body.content], body.source, body.chunk_size)
 
     # mongodb新建记录
-    await init_db(body.db_name, [DocumentTest])
-    document = DocumentTest(source=body.source, embed=True, create_date=datetime.now(), content=body.content)
+    await init_db(body.db_name, [MyDocument])
+    document = MyDocument(source=body.source, embed=True, create_date=datetime.now(), content=body.content)
     await document.create()
 
     return {"raw_result": {"n": 1, "ok": 1}}
