@@ -20,7 +20,7 @@ async def rag_list(skip: int = 0,
     result = Adventure.find_all()
     result = await result.sort(-Adventure.create_date).skip(skip).limit(limit).to_list()
     # 用最新记录的值来填写生成用的默认值
-    last_result = result[0]
+    last_result = await Adventure.find({}).first_or_none()
     if last_result:
         fetch_k = last_result.fetch_k
         k = last_result.k
