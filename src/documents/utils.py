@@ -14,7 +14,7 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from src.adventures.models import AdventureRag
 from src.config import settings
 from dotenv import load_dotenv, find_dotenv
-from src.documents.schemas import ParserEnum, RetrieverTypeEnum, ModelNameEnum, RagIn
+from src.documents.schemas import ParserEnum, RetrieverTypeEnum, ModelNameEnum, RagIn, ChatIn
 from src.utils import init_db
 from datetime import datetime
 import logging
@@ -140,4 +140,42 @@ async def rag_and_save(data: RagIn):
     result["fetch_k"] = data.fetch_k
     result["k"] = data.k
 
+    return result
+
+
+# 常规chat对话
+async def chat_to_answer(chat_in_data: ChatIn):
+    full_messages = [
+                ("system", chat_in_data.system_message_prompt),
+                ("human", chat_in_data.human_1),
+                ("ai", chat_in_data.ai_1),
+                ("human", "{user_input}"),
+            ]
+    if chat_in_data.llm_model_name == ModelNameEnum.gemini_pro:
+        llm = GoogleGenerativeAI(model="gemini-pro", max_output_tokens=2048)
+        # gemini模型没有system prompt
+        full_messages.pop(0)
+    else:
+        llm = ChatOpenAI(model_name=chat_in_data.llm_model_name, request_timeout=300)
+
+    if chat_in_data.ai_1:
+        chat_template = ChatPromptTemplate.from_messages(
+            full_messages
+        )
+        user_input = chat_in_data.human_2
+    else:
+        chat_template = ChatPromptTemplate.from_messages(
+            full_messages[:-2]
+        )
+        user_input = chat_in_data.human_1
+
+    output_parser = StrOutputParser()
+    chain = (
+            {"user_input": RunnablePassthrough()}
+            | chat_template
+            | llm
+            | output_parser
+    )
+
+    result = chain.invoke(user_input)
     return result

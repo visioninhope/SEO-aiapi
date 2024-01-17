@@ -3,10 +3,10 @@ from fastapi import APIRouter, BackgroundTasks
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 
-from .models import AdventureRag
+from .models import AdventureRag, AdventureChat
 from ..config import settings
-from ..documents.schemas import RagIn, ParserEnum, RetrieverTypeEnum, ModelNameEnum
-from ..documents.utils import rag_and_save, format_docs
+from ..documents.schemas import RagIn, ParserEnum, RetrieverTypeEnum, ModelNameEnum, ChatIn
+from ..documents.utils import rag_and_save, format_docs, chat_to_answer
 from ..utils import init_db
 
 router = APIRouter(
@@ -17,7 +17,7 @@ router = APIRouter(
 
 @router.get("/rag", summary='Rag测试列表页', description="")
 async def rag_list(skip: int = 0,
-                   limit: int = 10, ):
+                   limit: int = 10):
     await init_db(settings.db_name, [AdventureRag])
     result = AdventureRag.find_all()
     result = await result.sort(-AdventureRag.create_date).skip(skip).limit(limit).to_list()
@@ -54,11 +54,42 @@ async def rag_post(data: RagIn, background_tasks: BackgroundTasks):
     return {"message": "Task has been added to the queue."}
 
 
-@router.get("/test", summary="临时测试各种功能")
-async def test():
-    db = Chroma(embedding_function=OpenAIEmbeddings(),
-                       persist_directory=os.environ.get("CHROMA_PERSIST_DIRECTORY"))
-    docs = db.similarity_search("lab press",k=3)
-    docs += db.similarity_search("lab press",k=3)
-    docs = format_docs(docs)
-    return docs
+@router.get("/chat", summary='常规chat测试列表页')
+async def chat_list(skip: int = 0,
+                   limit: int = 10):
+    await init_db(settings.db_name, [AdventureChat])
+    result = AdventureChat.find_all()
+    result = await result.sort(-AdventureChat.create_date).skip(skip).limit(limit).to_list()
+    # 用最新记录的值来填写生成用的默认值
+    last_result = await AdventureChat.find({}).sort(-AdventureChat.create_date).first_or_none()
+    if last_result:
+        system_message_prompt = last_result.system_message_prompt
+        human_1 = last_result.human_1
+        ai_1 = last_result.ai_1
+        human_2 = last_result.human_2
+        llm_model_name = last_result.llm_model_name
+        temperature = last_result.temperature
+    else:
+        system_message_prompt = None
+        human_1 = None
+        ai_1 = None
+        human_2 = None
+        llm_model_name = ModelNameEnum.gemini_pro
+        temperature = 0.7
+
+    return {"db_name": settings.db_name, "llm_model_name": llm_model_name, "llm_model_names": ModelNameEnum.__members__.items(),
+            "system_message_prompt": system_message_prompt, "human_1": human_1, "ai_1": ai_1, "human_2": human_2, "temperature": temperature,
+            "skip": skip, "limit": limit,
+            "data": result}
+
+
+@router.post("/chat", summary='Chat测试提交(后台运行)',
+             description="1问1答或者2轮问答模式")
+async def chat_post(data: ChatIn, background_tasks: BackgroundTasks):
+    # background_tasks.add_task(rag_and_save, data)
+    return {"message": "Task has been added to the queue."}
+
+@router.post("/test", summary="临时测试各种功能")
+async def test(data: ChatIn):
+    result = await chat_to_answer(data)
+    return result

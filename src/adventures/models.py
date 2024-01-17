@@ -19,3 +19,18 @@ class AdventureRag(Document):
 
     class Settings:
         name = "adventures_rag"
+
+class AdventureChat(Document):
+    system_message_prompt: Optional[str] = ''
+    human_1: str
+    ai_1: Optional[str] = ''
+    human_2: Optional[str] = ''
+    answer: str | dict
+    llm_model_name: str
+    temperature: float = 0.7
+
+
+    create_date: Optional[datetime] = datetime.now()
+
+    class Settings:
+        name = "adventures_chat"

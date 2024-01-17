@@ -67,6 +67,7 @@ class ModelNameEnum(str, Enum):
     gpt_3_5_turbo_16k = "gpt-3.5-turbo-16k"
     gpt_4 = "gpt-4"
 
+# Rag生成输入参数
 class RagIn(BaseModel):
     topic: str
     system_message_prompt: str | None
@@ -75,3 +76,14 @@ class RagIn(BaseModel):
     parser_type: ParserEnum = ParserEnum.str
     fetch_k: int = settings.rag_default_fetch_k
     k: int = settings.rag_default_k
+
+
+# Chat生成输入参数
+class ChatIn(BaseModel):
+    llm_model_name: ModelNameEnum = ModelNameEnum.gemini_pro
+    temperature: float = 0.7
+    system_message_prompt: str | None
+    human_1: str
+    ai_1: str | None
+    human_2: str | None
+
