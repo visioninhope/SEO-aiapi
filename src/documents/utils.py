@@ -151,6 +151,7 @@ async def chat_to_answer(chat_in_data: ChatIn):
                 ("ai", chat_in_data.ai_1),
                 ("human", "{user_input}"),
             ]
+    # 模型切换
     if chat_in_data.llm_model_name == ModelNameEnum.gemini_pro:
         llm = GoogleGenerativeAI(model="gemini-pro", max_output_tokens=2048)
         # gemini模型没有system prompt
@@ -158,6 +159,7 @@ async def chat_to_answer(chat_in_data: ChatIn):
     else:
         llm = ChatOpenAI(model_name=chat_in_data.llm_model_name, request_timeout=300)
 
+    # 有ai_1就是2轮对话，1轮与2轮间切换
     if chat_in_data.ai_1:
         chat_template = ChatPromptTemplate.from_messages(
             full_messages
@@ -165,7 +167,7 @@ async def chat_to_answer(chat_in_data: ChatIn):
         user_input = chat_in_data.human_2
     else:
         chat_template = ChatPromptTemplate.from_messages(
-            full_messages[:-2]
+            full_messages[2:]
         )
         user_input = chat_in_data.human_1
 
