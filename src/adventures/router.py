@@ -1,10 +1,8 @@
 from fastapi import APIRouter, BackgroundTasks
-from pymongo import MongoClient
-
 from .models import Adventure
 from ..config import settings
 from ..documents.schemas import RagIn, ParserEnum, RetrieverTypeEnum, ModelNameEnum
-from ..documents.utils import rag_topic_to_answer_by_gemini, rag_and_save
+from ..documents.utils import rag_and_save
 from ..utils import init_db
 
 router = APIRouter(

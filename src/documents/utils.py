@@ -41,7 +41,7 @@ def format_docs(docs):
 
 
 # 简单rag，需要提供topic和system_message_prompt。parser_type即返回值有str和json2种选择，fetch_k为矢量数据库mmr搜索拿到的数据总数，k为返回的数量，MultiQuery模式为最复杂模式，首先生成3个额外查询，然后用mmr搜索到结果，最终用cohere排序
-async def rag_topic_to_answer_by_gemini(topic: str,
+async def rag_topic_to_answer(topic: str,
                                         system_message_prompt: str,
                                         llm_model_name: ModelNameEnum = "gemini-pro",
                                         retriever_type: RetrieverTypeEnum = "mmr",
@@ -105,7 +105,7 @@ async def rag_topic_to_answer_by_gemini(topic: str,
 
 # 生成rag内容并保存在mongodb
 async def rag_and_save(data: RagIn):
-    result = await rag_topic_to_answer_by_gemini(data.topic, data.system_message_prompt, data.llm_model_name,
+    result = await rag_topic_to_answer(data.topic, data.system_message_prompt, data.llm_model_name,
                                                  data.retriever_type, data.parser_type, data.fetch_k, data.k)
 
     await init_db(settings.db_name, [Adventure])

@@ -8,11 +8,8 @@ from typing import Union
 from bson.objectid import ObjectId
 from .models import MyDocument, Config
 from .schemas import DocumentListOut, DocumentDeleteIn, DocumentUpdateIn, DocumentCreateIn, DBResultOut, \
-    NegativeKeywordsUpdateIn, ParserEnum, RetrieverTypeEnum
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from .utils import delete_from_chroma_by_source, text_splitter_and_save_to_chroma, rag_topic_to_answer_by_gemini
+    NegativeKeywordsUpdateIn
+from .utils import delete_from_chroma_by_source, text_splitter_and_save_to_chroma
 
 router = APIRouter(
     prefix='/document',
