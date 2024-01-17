@@ -11,13 +11,15 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough, RunnableParallel
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from src.adventures.models import Adventure
+from src.adventures.models import AdventureRag
 from src.config import settings
 from dotenv import load_dotenv, find_dotenv
 from src.documents.schemas import ParserEnum, RetrieverTypeEnum, ModelNameEnum, RagIn
 from src.utils import init_db
 from datetime import datetime
+import logging
 
+logging.basicConfig(filename='storage/logs/app.log', format='%(asctime)s: %(levelname)s - %(message)s')
 load_dotenv(find_dotenv(), override=True)
 
 
@@ -117,16 +119,19 @@ async def rag_topic_to_answer(topic: str,
 
 # 生成rag内容并保存在mongodb
 async def rag_and_save(data: RagIn):
-    result = await rag_topic_to_answer(data.topic, data.system_message_prompt, data.llm_model_name,
+    try:
+        result = await rag_topic_to_answer(data.topic, data.system_message_prompt, data.llm_model_name,
                                                  data.retriever_type, data.parser_type, data.fetch_k, data.k)
 
-    await init_db(settings.db_name, [Adventure])
-    context_dict = [{"page_content": doc.page_content, "metadata": doc.metadata} for doc in result["context"]]
-    db_data = Adventure(topic=data.topic, answer=result["answer"], context=context_dict,
-                        system_message_prompt=data.system_message_prompt, llm_model_name=data.llm_model_name,
-                        retriever_type=data.retriever_type, parser_type=data.parser_type, fetch_k=data.fetch_k,
-                        k=data.k, create_date=datetime.now())
-    await db_data.insert()
+        await init_db(settings.db_name, [AdventureRag])
+        context_dict = [{"page_content": doc.page_content, "metadata": doc.metadata} for doc in result["context"]]
+        db_data = AdventureRag(topic=data.topic, answer=result["answer"], context=context_dict,
+                            system_message_prompt=data.system_message_prompt, llm_model_name=data.llm_model_name,
+                            retriever_type=data.retriever_type, parser_type=data.parser_type, fetch_k=data.fetch_k,
+                            k=data.k, create_date=datetime.now())
+        await db_data.insert()
+    except Exception as e:
+        logging.error(str(e))
 
     result["system_message_prompt"] = data.system_message_prompt
     result["llm_model_name"] = data.llm_model_name

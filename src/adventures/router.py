@@ -3,7 +3,7 @@ from fastapi import APIRouter, BackgroundTasks
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 
-from .models import Adventure
+from .models import AdventureRag
 from ..config import settings
 from ..documents.schemas import RagIn, ParserEnum, RetrieverTypeEnum, ModelNameEnum
 from ..documents.utils import rag_and_save, format_docs
@@ -18,11 +18,11 @@ router = APIRouter(
 @router.get("/rag", summary='Rag测试列表页', description="")
 async def rag_list(skip: int = 0,
                    limit: int = 10, ):
-    await init_db(settings.db_name, [Adventure])
-    result = Adventure.find_all()
-    result = await result.sort(-Adventure.create_date).skip(skip).limit(limit).to_list()
+    await init_db(settings.db_name, [AdventureRag])
+    result = AdventureRag.find_all()
+    result = await result.sort(-AdventureRag.create_date).skip(skip).limit(limit).to_list()
     # 用最新记录的值来填写生成用的默认值
-    last_result = await Adventure.find({}).sort(-Adventure.create_date).first_or_none()
+    last_result = await AdventureRag.find({}).sort(-AdventureRag.create_date).first_or_none()
     if last_result:
         fetch_k = last_result.fetch_k
         k = last_result.k
