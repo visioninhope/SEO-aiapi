@@ -35,7 +35,19 @@ async def text_splitter_and_save_to_chroma(text: list[str], source: str, chunk_s
     await Chroma.afrom_documents(documents, OpenAIEmbeddings(),
                                  persist_directory=settings.chroma_persist_directory)
 
+# 移除重复文档（用于多次查询后合并的文档）
+def get_unique_docs(docs):
+    seen = set()
+    unique_docs = []
+    for obj in docs:
+        unique_value = obj.metadata["source"] + str(obj.metadata["start_index"])
+        if unique_value not in seen:
+            seen.add(unique_value)
+            unique_docs.append(obj)
+    return unique_docs
 
+
+# 将文档合并为一段context
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 

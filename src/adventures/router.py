@@ -1,8 +1,12 @@
+import os
 from fastapi import APIRouter, BackgroundTasks
+from langchain_community.vectorstores.chroma import Chroma
+from langchain_openai import OpenAIEmbeddings
+
 from .models import Adventure
 from ..config import settings
 from ..documents.schemas import RagIn, ParserEnum, RetrieverTypeEnum, ModelNameEnum
-from ..documents.utils import rag_and_save
+from ..documents.utils import rag_and_save, format_docs
 from ..utils import init_db
 
 router = APIRouter(
@@ -48,3 +52,13 @@ async def rag_list(skip: int = 0,
 async def rag_post(data: RagIn, background_tasks: BackgroundTasks):
     background_tasks.add_task(rag_and_save, data)
     return {"message": "Task has been added to the queue."}
+
+
+@router.get("/test", summary="临时测试各种功能")
+async def test():
+    db = Chroma(embedding_function=OpenAIEmbeddings(),
+                       persist_directory=os.environ.get("CHROMA_PERSIST_DIRECTORY"))
+    docs = db.similarity_search("lab press",k=3)
+    docs += db.similarity_search("lab press",k=3)
+    docs = format_docs(docs)
+    return docs
