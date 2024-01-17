@@ -67,7 +67,7 @@ async def document_update(body: DocumentUpdateIn):
 
 
 @router.post("/create", response_model=DBResultOut, summary='新建资料', description="分割新资料并存入矢量数据库，然后记录在mongodb中")
-async def document_update(body: DocumentCreateIn):
+async def document_create(body: DocumentCreateIn):
     await text_splitter_and_save_to_chroma([body.content], body.source, body.chunk_size)
 
     # mongodb新建记录
@@ -76,6 +76,16 @@ async def document_update(body: DocumentCreateIn):
     await document.create()
 
     return {"raw_result": {"n": 1, "ok": 1}}
+
+@router.get("/rebuild", summary='全部mongodb内资料embed为false的资料矢量化并存入chroma')
+async def document_rebuild(db_name:str = "kintek_test",chunk_size: int = 800):
+    await init_db(db_name, [MyDocument])
+    for body in await MyDocument.find(MyDocument.embed == False).to_list():
+        await text_splitter_and_save_to_chroma([body.content], body.source, chunk_size)
+        await MyDocument.find_one(MyDocument.id == ObjectId(body.id)).update(
+            Set({MyDocument.embed: True}))
+
+    return "ok"
 
 
 @router.post("/negative_keywords/update", response_model=DBResultOut, summary='修改否定关键词',
