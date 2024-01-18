@@ -11,7 +11,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough, RunnableParallel
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from src.adventures.models import AdventureRag
+from src.adventures.models import AdventureRag, AdventureChat
 from src.config import settings
 from dotenv import load_dotenv, find_dotenv
 from src.documents.schemas import ParserEnum, RetrieverTypeEnum, ModelNameEnum, RagIn, ChatIn
@@ -26,7 +26,7 @@ load_dotenv(find_dotenv(), override=True)
 # 从chroma删除source匹配的记录
 def delete_from_chroma_by_source(source: str):
     client = chromadb.PersistentClient(path=settings.chroma_persist_directory)
-    collection = client.get_collection("langchain")
+    collection = client.get_or_create_collection("langchain")
     collection.delete(where={"source": source})
 
 
@@ -131,17 +131,11 @@ async def rag_and_save(data: RagIn):
                             retriever_type=data.retriever_type, parser_type=data.parser_type, fetch_k=data.fetch_k,
                             k=data.k, create_date=datetime.now())
         await db_data.insert()
+        return result
     except Exception as e:
         logging.error(str(e))
 
-    result["system_message_prompt"] = data.system_message_prompt
-    result["llm_model_name"] = data.llm_model_name
-    result["retriever_type"] = data.retriever_type
-    result["parser_type"] = data.parser_type
-    result["fetch_k"] = data.fetch_k
-    result["k"] = data.k
-
-    return result
+    return None
 
 
 # 常规chat对话
@@ -180,5 +174,20 @@ async def chat_to_answer(chat_in_data: ChatIn):
             | output_parser
     )
 
-    result = chain.invoke(user_input)
+    result = await chain.ainvoke(user_input)
     return result
+
+# 存储常规chat测试到数据库
+async def chat_and_save(chat_in_data: ChatIn):
+    try:
+        answer = await chat_to_answer(chat_in_data)
+        await init_db(settings.db_name, [AdventureChat])
+
+        db_data = AdventureChat(system_message_prompt=chat_in_data.system_message_prompt, human_1=chat_in_data.human_1, ai_1=chat_in_data.ai_1,
+                                human_2=chat_in_data.human_2, answer=answer, llm_model_name=chat_in_data.llm_model_name, temperature=chat_in_data.temperature, create_date=datetime.now())
+        await db_data.insert()
+        return True
+    except Exception as e:
+        logging.error(str(e))
+        return False
+

@@ -28,8 +28,6 @@ class AdventureChat(Document):
     answer: str | dict
     llm_model_name: str
     temperature: float = 0.7
-
-
     create_date: Optional[datetime] = datetime.now()
 
     class Settings:

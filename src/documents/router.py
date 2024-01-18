@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from beanie.odm.operators.find.evaluation import Text
 from beanie.odm.operators.update.general import Set
@@ -67,6 +68,9 @@ async def document_update(body: DocumentUpdateIn):
 @router.post("/create", response_model=DBResultOut, summary='新建资料', description="分割新资料并存入矢量数据库，然后记录在mongodb中")
 async def document_create(body: DocumentCreateIn):
     await init_db(body.db_name, [MyDocument])
+    # 移除url末尾的/
+    if re.search('/$', body.source): body.source = body.source[:-1]
+    # mongodb查找记录是否存在，存在则不再新建，否则新建记录，并同步矢量化记录
     doc = await MyDocument.find_one(MyDocument.source == body.source)
     if not doc:
         docs = await text_splitter_and_save_to_chroma([body.content], body.source, body.chunk_size)
@@ -76,7 +80,7 @@ async def document_create(body: DocumentCreateIn):
         await document.create()
         return {"message": "document create success!"}
     else:
-        return {"message": "xxx 来源重复，新建文档失败! xxx"}
+        return {"message": "xxx 资料来源(url)重复，新建文档失败! xxx"}
 
 @router.get("/rebuild", summary='全部mongodb内资料embed为false的资料矢量化并存入chroma')
 async def document_rebuild(db_name:str = "kintek_test",chunk_size: int = 800):
