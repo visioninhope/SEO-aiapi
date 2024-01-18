@@ -10,7 +10,7 @@ from bson.objectid import ObjectId
 from .models import MyDocument, Config
 from .schemas import DocumentListOut, DocumentDeleteIn, DocumentUpdateIn, DocumentCreateIn, DBResultOut, \
     NegativeKeywordsUpdateIn
-from .utils import delete_from_chroma_by_source, text_splitter_and_save_to_chroma
+from .utils import delete_from_chroma_by_source, text_splitter_and_save_to_chroma, better_chunk_size
 
 router = APIRouter(
     prefix='/document',
@@ -73,7 +73,8 @@ async def document_create(body: DocumentCreateIn):
     # mongodb查找记录是否存在，存在则不再新建，否则新建记录，并同步矢量化记录
     doc = await MyDocument.find_one(MyDocument.source == body.source)
     if not doc:
-        docs = await text_splitter_and_save_to_chroma([body.content], body.source, body.chunk_size)
+        chunk_size = better_chunk_size(body.content, body.chunk_size)
+        docs = await text_splitter_and_save_to_chroma([body.content], body.source, chunk_size)
         docs = "\n\n---\n\n".join(doc.page_content for doc in docs)
         # mongodb新建记录
         document = MyDocument(source=body.source, embed=True, create_date=datetime.now(), content=body.content, chunk_size=body.chunk_size, split_texts=docs)

@@ -11,7 +11,7 @@ from src.adventures import router as adventures_router
 from src.config import settings
 import logging
 
-logging.basicConfig(filename='storage/logs/app.log', format='%(asctime)s: %(levelname)s - %(message)s')
+logging.basicConfig(filename=settings.log_file, format='%(asctime)s: %(levelname)s - %(message)s')
 
 app = FastAPI()
 app.add_middleware(GZipMiddleware, minimum_size=1000)

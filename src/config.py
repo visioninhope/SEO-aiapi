@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     chunk_overlap: int
     rag_default_fetch_k: int
     rag_default_k: int
+    log_file: str
 
     model_config = SettingsConfigDict(case_sensitive=True)
 

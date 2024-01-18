@@ -19,7 +19,7 @@ from src.utils import init_db
 from datetime import datetime
 import logging
 
-logging.basicConfig(filename='storage/logs/app.log', format='%(asctime)s: %(levelname)s - %(message)s')
+logging.basicConfig(filename=settings.log_file, format='%(asctime)s: %(levelname)s - %(message)s')
 load_dotenv(find_dotenv(), override=True)
 
 
@@ -28,6 +28,23 @@ def delete_from_chroma_by_source(source: str):
     client = chromadb.PersistentClient(path=settings.chroma_persist_directory)
     collection = client.get_or_create_collection("langchain")
     collection.delete(where={"source": source})
+
+# 尝试给出一个更好的chunk_size，先用给的chunk_size切割，如果有段落小于100或段落太长，说明大小不太合适，就加点
+def better_chunk_size(text: str, chunk_size: int):
+    new_chunk_size = chunk_size
+    for i in range(2):
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=new_chunk_size,
+            chunk_overlap=new_chunk_size * 0.2,
+        )
+        for p in text_splitter.split_text(text):
+            if len(p) < 100:
+                new_chunk_size += len(text)
+                break
+            if len(p) > new_chunk_size - 10:
+                new_chunk_size += 200
+                break
+    return new_chunk_size
 
 
 # 分割文本，并存入chroma，添加source
