@@ -49,7 +49,7 @@ class NegativeKeywordsUpdateIn(BaseModel):
 
 # DB 删除，修改，新建结果：{}
 class DBResultOut(BaseModel):
-    raw_result: dict | str
+    message: str
 
 # LLM输出的answer的可选类，获取枚举数据：ParserEnum.__members__.items()
 class ParserEnum(str, Enum):

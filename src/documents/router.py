@@ -37,7 +37,7 @@ async def document_get(q: Union[str, None] = None,
     # 获取否定关键词列表
     negative_keywords = await Config.find_one(Config.key == 'negative_keywords')
 
-    return {"q": q,"db_name": settings.db_name, "source": source, "total": total, "skip": skip, "limit": limit, "data": result, "chunk_size": settings.chunk_size, "negative_keywords": negative_keywords.value}
+    return {"q": q,"db_name": settings.db_name, "source": source, "total": total, "skip": skip, "limit": limit, "chunk_size": settings.chunk_size, "negative_keywords": negative_keywords.value, "data": result}
 
 
 @router.post("/delete", response_model=DBResultOut, summary='删除该资料', description="根据资料_id删除该资料，并同步删除矢量数据库中的同源数据")
@@ -46,33 +46,37 @@ async def document_delete(body: DocumentDeleteIn):
 
     # mongodb中删除记录
     await init_db(body.db_name, [MyDocument])
-    result = await MyDocument.find_one(MyDocument.id == ObjectId(body.id)).delete()
+    await MyDocument.find_one(MyDocument.id == ObjectId(body.id)).delete()
 
-    return {"raw_result": result.raw_result}
+    return {"message": "document delete success!"}
 
 
 @router.post("/update", response_model=DBResultOut, summary='修改该资料', description="根据_id和新内容修改该资料，并同步修改矢量数据库中的同源数据（需要先删除原有，再矢量化）")
 async def document_update(body: DocumentUpdateIn):
     delete_from_chroma_by_source(body.source)
-    await text_splitter_and_save_to_chroma([body.content], body.source, body.chunk_size)
+    docs = await text_splitter_and_save_to_chroma([body.content], body.source, body.chunk_size)
+    docs = "\n***\n".join(doc.page_content for doc in docs)
 
     # mongodb更新记录
     await init_db(body.db_name, [MyDocument])
-    result = await MyDocument.find_one(MyDocument.id == ObjectId(body.id)).update(Set({MyDocument.content: body.content, MyDocument.embed: True}))
+    await MyDocument.find_one(MyDocument.id == ObjectId(body.id)).update(Set({MyDocument.content: body.content, MyDocument.embed: True, MyDocument.chunk_size: body.chunk_size, MyDocument.split_texts: docs}))
 
-    return {"raw_result": result.raw_result}
+    return {"message": "document update success!"}
 
 
 @router.post("/create", response_model=DBResultOut, summary='新建资料', description="分割新资料并存入矢量数据库，然后记录在mongodb中")
 async def document_create(body: DocumentCreateIn):
-    await text_splitter_and_save_to_chroma([body.content], body.source, body.chunk_size)
-
-    # mongodb新建记录
     await init_db(body.db_name, [MyDocument])
-    document = MyDocument(source=body.source, embed=True, create_date=datetime.now(), content=body.content)
-    await document.create()
-
-    return {"raw_result": {"n": 1, "ok": 1}}
+    doc = await MyDocument.find_one(MyDocument.source == body.source)
+    if not doc:
+        docs = await text_splitter_and_save_to_chroma([body.content], body.source, body.chunk_size)
+        docs = "\n\n---\n\n".join(doc.page_content for doc in docs)
+        # mongodb新建记录
+        document = MyDocument(source=body.source, embed=True, create_date=datetime.now(), content=body.content, chunk_size=body.chunk_size, split_texts=docs)
+        await document.create()
+        return {"message": "document create success!"}
+    else:
+        return {"message": "xxx 来源重复，新建文档失败! xxx"}
 
 @router.get("/rebuild", summary='全部mongodb内资料embed为false的资料矢量化并存入chroma')
 async def document_rebuild(db_name:str = "kintek_test",chunk_size: int = 800):
@@ -82,7 +86,7 @@ async def document_rebuild(db_name:str = "kintek_test",chunk_size: int = 800):
         await MyDocument.find_one(MyDocument.id == ObjectId(body.id)).update(
             Set({MyDocument.embed: True}))
 
-    return "ok"
+    return {"message": "document create success!"}
 
 
 @router.post("/negative_keywords/update", response_model=DBResultOut, summary='修改否定关键词',
@@ -93,4 +97,4 @@ async def negative_keywords_update(body: NegativeKeywordsUpdateIn):
         Set({Config.value: body.value}),
         on_insert=Config(key="negative_keywords", value=body.value))
 
-    return {"raw_result": {"n": 1, "ok": 1}}
+    return {"message": "negative keywords update success!"}
