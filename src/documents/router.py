@@ -83,13 +83,16 @@ async def document_create(body: DocumentCreateIn):
     else:
         return {"message": "xxx 资料来源(url)重复，新建文档失败! xxx"}
 
+
 @router.get("/rebuild", summary='全部mongodb内资料embed为false的资料矢量化并存入chroma')
-async def document_rebuild(db_name:str = "kintek_test",chunk_size: int = 800):
+async def document_rebuild(db_name:str ,chunk_size: int):
     await init_db(db_name, [MyDocument])
     for body in await MyDocument.find(MyDocument.embed == False).to_list():
-        await text_splitter_and_save_to_chroma([body.content], body.source, chunk_size)
+        new_chunk_size = better_chunk_size(body.content, chunk_size)
+        docs = await text_splitter_and_save_to_chroma([body.content], body.source, new_chunk_size)
+        docs = "\n\n---\n\n".join(doc.page_content for doc in docs)
         await MyDocument.find_one(MyDocument.id == ObjectId(body.id)).update(
-            Set({MyDocument.embed: True}))
+            Set({MyDocument.content: body.content, MyDocument.embed: True, MyDocument.chunk_size: new_chunk_size, MyDocument.split_texts: docs}))
 
     return {"message": "document create success!"}
 
