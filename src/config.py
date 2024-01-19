@@ -4,8 +4,13 @@ from dotenv import find_dotenv, load_dotenv
 load_dotenv(find_dotenv(".env"))
 
 class Settings(BaseSettings):
-    openai_api_embed_key: str | None
-    openai_api_embed_base: str | None
+    ai_openai_api_key: str | None
+    ai_openai_api_base: str | None
+    ai_transit_openai_api_base: str | None
+    ai_transit_openai_api_key: str | None
+    ai_azure_openai_api_key: str | None
+    ai_azure_endpoint: str | None
+    ai_azure_deployment_embed: str | None
     cohere_api_key: str | None
     # 允许访问的IP列表
     allowed_ips: list

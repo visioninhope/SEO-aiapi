@@ -1,12 +1,8 @@
-import os
 from fastapi import APIRouter, BackgroundTasks
-from langchain_community.vectorstores.chroma import Chroma
-from langchain_openai import OpenAIEmbeddings
-
 from .models import AdventureRag, AdventureChat
 from ..config import settings
 from ..documents.schemas import RagIn, ParserEnum, RetrieverTypeEnum, ModelNameEnum, ChatIn
-from ..documents.utils import rag_and_save, format_docs, chat_to_answer, chat_and_save
+from ..documents.utils import rag_and_save, chat_to_answer, chat_and_save
 from ..utils import init_db
 
 router = APIRouter(

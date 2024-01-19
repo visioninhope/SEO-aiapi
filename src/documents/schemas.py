@@ -83,7 +83,7 @@ class ChatIn(BaseModel):
     human_1: str
     llm_model_name: ModelNameEnum = ModelNameEnum.gemini_pro
     temperature: float = 0.7
-    system_message_prompt: str | None
-    ai_1: str | None
-    human_2: str | None
+    system_message_prompt: str | None = ""
+    ai_1: str | None = ""
+    human_2: str | None = ""
 
