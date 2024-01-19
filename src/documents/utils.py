@@ -51,7 +51,7 @@ def better_chunk_size(text: str, chunk_size: int):
 async def text_splitter_and_save_to_chroma(text: list[str], source: str, chunk_size: int):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_size * 0.2, add_start_index=True)
     documents = text_splitter.create_documents(text, [{"source": source}])
-    await Chroma.afrom_documents(documents, OpenAIEmbeddings(),
+    await Chroma.afrom_documents(documents, OpenAIEmbeddings(openai_api_base=settings.openai_api_embed_base, openai_api_key=settings.openai_api_embed_key),
                                  persist_directory=settings.chroma_persist_directory)
     return documents
 
@@ -80,7 +80,7 @@ async def rag_topic_to_answer(topic: str,
                                         parser_type: ParserEnum = "str",
                                         fetch_k: int = 10,
                                         k: int = 3):
-    retriever = Chroma(embedding_function=OpenAIEmbeddings(),
+    retriever = Chroma(embedding_function=OpenAIEmbeddings(openai_api_base=settings.openai_api_embed_base, openai_api_key=settings.openai_api_embed_key),
                        persist_directory=os.environ.get("CHROMA_PERSIST_DIRECTORY")).as_retriever(search_type="mmr",
                                                                                                   search_kwargs={
                                                                                                       "fetch_k": fetch_k,
