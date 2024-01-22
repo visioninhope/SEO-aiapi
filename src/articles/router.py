@@ -1,10 +1,10 @@
 from beanie.odm.operators.find.evaluation import Text
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from ..utils import init_db
 from typing import Union
 from bson.objectid import ObjectId
 from .models import Article, ArticleTypeEnum
-from .schemas import ArticleDeleteIn
+from .schemas import ArticleDeleteIn, ArticleCreateIn
 from src.config import settings
 
 router = APIRouter(
@@ -32,11 +32,14 @@ async def article_get(q: Union[str, None] = None,
     return {"q": q, "db_name": settings.db_name, "type": type, "types": ArticleTypeEnum.__members__.items(), "total": total, "skip": skip, "limit": limit, "data": result}
 
 
+@router.post("/", summary="生成文章",  description="根据关键词生成文章")
+async def article_create(data: ArticleCreateIn, background_tasks: BackgroundTasks):
+    pass
 
 
 @router.post("/delete", summary='删除文章', description="根据_id删除数据集articles中的文章")
-async def article_delete(body: ArticleDeleteIn):
-    await init_db(body.db_name, [Article])
-    result = await Article.find_one(Article.id == ObjectId(body.id)).delete()
+async def article_delete(data: ArticleDeleteIn):
+    await init_db(data.db_name, [Article])
+    result = await Article.find_one(Article.id == ObjectId(data.id)).delete()
 
     return {"raw_result": result.raw_result}

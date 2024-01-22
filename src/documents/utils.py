@@ -53,7 +53,9 @@ async def text_splitter_and_save_to_chroma(text: list[str], source: str, chunk_s
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_size * 0.2,
                                                    add_start_index=True)
     documents = text_splitter.create_documents(text, [{"source": source}])
-    embedding = AzureOpenAIEmbeddings(azure_endpoint=settings.ai_azure_endpoint,openai_api_key=settings.ai_azure_openai_api_key,deployment=settings.ai_azure_deployment_embed)
+    embedding = AzureOpenAIEmbeddings(azure_endpoint=settings.ai_azure_endpoint,
+                                      openai_api_key=settings.ai_azure_openai_api_key,
+                                      deployment=settings.ai_azure_deployment_embed)
     await Chroma.afrom_documents(documents, embedding, persist_directory=settings.chroma_persist_directory)
     return documents
 
@@ -83,7 +85,9 @@ async def rag_topic_to_answer(topic: str,
                               parser_type: ParserEnum = "str",
                               fetch_k: int = 10,
                               k: int = 3):
-    embedding = AzureOpenAIEmbeddings(azure_endpoint=settings.ai_azure_endpoint,openai_api_key=settings.ai_azure_openai_api_key,deployment=settings.ai_azure_deployment_embed)
+    embedding = AzureOpenAIEmbeddings(azure_endpoint=settings.ai_azure_endpoint,
+                                      openai_api_key=settings.ai_azure_openai_api_key,
+                                      deployment=settings.ai_azure_deployment_embed)
 
     retriever = Chroma(embedding_function=embedding,
                        persist_directory=os.environ.get("CHROMA_PERSIST_DIRECTORY")).as_retriever(search_type="mmr",
@@ -91,11 +95,14 @@ async def rag_topic_to_answer(topic: str,
                                                                                                       "fetch_k": fetch_k,
                                                                                                       "k": k})
 
-    llm_for_multi_query = ChatOpenAI(openai_api_key=settings.ai_transit_openai_api_key, openai_api_base=settings.ai_transit_openai_api_base)
+    llm_for_multi_query = ChatOpenAI(openai_api_key=settings.ai_transit_openai_api_key,
+                                     openai_api_base=settings.ai_transit_openai_api_base)
     if llm_model_name == ModelNameEnum.gemini_pro:
         llm = GoogleGenerativeAI(model="gemini-pro", max_output_tokens=2048)
     else:
-        llm = ChatOpenAI(model_name=llm_model_name, request_timeout=300, openai_api_key=settings.ai_transit_openai_api_key, openai_api_base=settings.ai_transit_openai_api_base)
+        llm = ChatOpenAI(model_name=llm_model_name, request_timeout=300,
+                         openai_api_key=settings.ai_transit_openai_api_key,
+                         openai_api_base=settings.ai_transit_openai_api_base)
 
     if retriever_type == RetrieverTypeEnum.multi_query:
         retriever = MultiQueryRetriever.from_llm(
@@ -172,10 +179,12 @@ async def chat_to_answer(chat_in_data: ChatIn):
     # 模型切换
     if chat_in_data.llm_model_name == ModelNameEnum.gemini_pro:
         llm = GoogleGenerativeAI(model="gemini-pro", max_output_tokens=2048)
-        # gemini模型没有system prompt
+        # gemini模型没有system prompt，2轮对话分割点也得变
         full_messages.pop(0)
     else:
-        llm = ChatOpenAI(model_name=chat_in_data.llm_model_name, request_timeout=300, openai_api_key=settings.ai_transit_openai_api_key, openai_api_base=settings.ai_transit_openai_api_base)
+        llm = ChatOpenAI(model_name=chat_in_data.llm_model_name, request_timeout=300,
+                         openai_api_key=settings.ai_transit_openai_api_key,
+                         openai_api_base=settings.ai_transit_openai_api_base)
 
     # 有ai_1就是2轮对话，1轮与2轮间切换
     if chat_in_data.ai_1:
@@ -185,8 +194,9 @@ async def chat_to_answer(chat_in_data: ChatIn):
         user_input = chat_in_data.human_2
     else:
         chat_template = ChatPromptTemplate.from_messages(
-            full_messages[3:]
+            full_messages[-1]
         )
+        print(full_messages[-1])
         user_input = chat_in_data.human_1
 
     output_parser = StrOutputParser()
@@ -213,6 +223,5 @@ async def chat_and_save(chat_in_data: ChatIn):
                                 temperature=chat_in_data.temperature, create_date=datetime.now())
         await db_data.insert()
         return True
-    except Exception as e:
-        logging.error(str(e))
+    except:
         return False

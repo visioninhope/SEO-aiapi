@@ -81,7 +81,8 @@ async def chat_list(skip: int = 0,
 
 @router.post("/chat", summary='Chat测试提交(后台运行)', description="1问1答或者2轮问答模式")
 async def chat_post(chat_in_data: ChatIn, background_tasks: BackgroundTasks):
-    background_tasks.add_task(chat_and_save, chat_in_data)
+    # background_tasks.add_task(chat_and_save, chat_in_data)
+    await chat_and_save(chat_in_data)
     return {"message": "Task has been added to the queue."}
 
 @router.post("/test", summary="临时测试各种功能")
