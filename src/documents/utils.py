@@ -33,14 +33,14 @@ def delete_from_chroma_by_source(source: str):
 # 尝试给出一个更好的chunk_size，先用给的chunk_size切割，如果有段落小于100或段落太长，说明大小不太合适，就加点
 def better_chunk_size(text: str, chunk_size: int):
     new_chunk_size = chunk_size
-    for i in range(3):
+    for i in range(5):
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=new_chunk_size,
             chunk_overlap=new_chunk_size * 0.2,
         )
         for p in text_splitter.split_text(text):
-            if len(p) < 100:
-                new_chunk_size += len(p)
+            if len(p) < 80:
+                new_chunk_size += 80
                 break
             if len(p) > new_chunk_size - 10:
                 new_chunk_size += 200
