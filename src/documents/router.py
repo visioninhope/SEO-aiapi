@@ -25,8 +25,7 @@ router = APIRouter(
 async def document_get(q: Union[str, None] = None,
                        source: Union[str, None] = None,
                        skip: int = 0,
-                       limit: int = 10,
-                       db_name: Union[str, None] = None):
+                       limit: int = 10):
     await init_db(settings.db_name, [MyDocument, Config])
     # 获取资料列表与总数
     if limit > 30: limit = 30
