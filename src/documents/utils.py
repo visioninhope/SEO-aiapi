@@ -212,16 +212,19 @@ async def chat_to_answer(chat_in_data: ChatIn):
 
 
 # 存储常规chat测试到数据库
-async def chat_and_save(chat_in_data: ChatIn):
-    try:
-        answer = await chat_to_answer(chat_in_data)
+async def chat_and_save(chat_in_data: ChatIn, tries: int = 6):
+    for i in range(tries):
+        try:
+            answer = await chat_to_answer(chat_in_data)
 
-        await init_db(settings.db_name, [AdventureChat])
-        db_data = AdventureChat(system_message_prompt=chat_in_data.system_message_prompt, human_1=chat_in_data.human_1,
-                                ai_1=chat_in_data.ai_1,
-                                human_2=chat_in_data.human_2, answer=answer, llm_model_name=chat_in_data.llm_model_name,
-                                temperature=chat_in_data.temperature, create_date=datetime.now())
-        await db_data.insert()
-        return True
-    except:
-        return False
+            await init_db(settings.db_name, [AdventureChat])
+            db_data = AdventureChat(system_message_prompt=chat_in_data.system_message_prompt, human_1=chat_in_data.human_1,
+                                    ai_1=chat_in_data.ai_1,
+                                    human_2=chat_in_data.human_2, answer=answer, llm_model_name=chat_in_data.llm_model_name,
+                                    temperature=chat_in_data.temperature, create_date=datetime.now())
+            await db_data.insert()
+            return True
+        except Exception as e:
+            logging.error(str(e))
+            if i > tries - 1:
+                raise
