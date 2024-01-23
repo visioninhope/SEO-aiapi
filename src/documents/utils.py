@@ -196,7 +196,6 @@ async def chat_to_answer(chat_in_data: ChatIn):
         chat_template = ChatPromptTemplate.from_messages(
             full_messages[-1]
         )
-        print(full_messages[-1])
         user_input = chat_in_data.human_1
 
     output_parser = StrOutputParser()
