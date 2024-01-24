@@ -86,4 +86,3 @@ class ChatIn(BaseModel):
     system_message_prompt: str | None = ""
     ai_1: str | None = ""
     human_2: str | None = ""
-

@@ -5,23 +5,23 @@ import pymongo
 from beanie import Document, Indexed
 from typing import Optional, Annotated
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from src.config import settings
-from src.documents.schemas import ModelNameEnum, RetrieverTypeEnum
+from src.documents.schemas import RetrieverTypeEnum, ModelNameEnum
 
 
 class ArticleParameter(BaseModel):
-    outline_prompt: str
+    outline_prompt: str = Field(max_length=2000)
     outline_model: ModelNameEnum = ModelNameEnum.gemini_pro
     outline_retriever_type: RetrieverTypeEnum = RetrieverTypeEnum.mmr
-    outline_fetch_k: int = settings.rag_default_fetch_k
-    outline_k: int = settings.rag_default_k
+    outline_fetch_k: int = Field(default=settings.rag_default_fetch_k, gt=0, le=100, description="must 0-100")
+    outline_k: int = Field(default=settings.rag_default_k, gt=0, le=100, description="must 0-100")
 
-    paragraph_prompt: str
+    paragraph_prompt: str = Field(max_length=2000)
     paragraph_model: ModelNameEnum = ModelNameEnum.gemini_pro
     paragraph_retriever_type: RetrieverTypeEnum = RetrieverTypeEnum.mmr
-    paragraph_fetch_k: int = settings.rag_default_fetch_k
-    paragraph_k: int = settings.rag_default_k
+    paragraph_fetch_k: int = Field(default=settings.rag_default_fetch_k, gt=0, le=100, description="must 0-100")
+    paragraph_k: int = Field(default=settings.rag_default_k, gt=0, le=100, description="must 0-100")
 
 
 class ArticleTypeEnum(str, Enum):
@@ -35,9 +35,19 @@ class Article(Document):
     type: Optional[ArticleTypeEnum] = None
     create_date: datetime = datetime.now()
     article_parameter: Optional[ArticleParameter] = None
+    outline: str | None = None
     content: str
     outline_context: str | None = None
     paragraph_context: str | None = None
 
     class Settings:
         name = "articles"
+
+class ArticleOption(Document):
+    name: Annotated[str, Indexed(unique=True)]
+    parameter: ArticleParameter
+    excerpt: str | None = ""
+    create_date: Optional[datetime] = datetime.now()
+
+    class Settings:
+        name = "article_options"

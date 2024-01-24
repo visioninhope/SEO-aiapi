@@ -11,3 +11,13 @@ class ArticleDeleteIn(BaseModel):
 class ArticleCreateIn(BaseModel):
     keyword: str
     article_parameter: ArticleParameter
+
+
+class ArticleOptionCreateIn(BaseModel):
+    name: str
+    parameter: ArticleParameter
+    excerpt: str | None = ""
+
+
+class ArticleOptionDeleteIn(BaseModel):
+    id: str # 变量为_id会无效

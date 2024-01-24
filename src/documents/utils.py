@@ -4,6 +4,7 @@ import chromadb
 from langchain.retrievers import MultiQueryRetriever, ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import CohereRerank
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_transformers import LongContextReorder
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
@@ -72,8 +73,11 @@ def get_unique_docs(docs):
     return unique_docs
 
 
-# 将文档合并为一段context
+# 将文档合并为一段context，如果超过3个文档，就重排下顺序，根据论文：https://arxiv.org/abs/2307.03172
 def format_docs(docs):
+    if len(docs) > 3:
+        reordering = LongContextReorder()
+        docs = reordering.transform_documents(docs)
     return "\n\n".join(doc.page_content for doc in docs)
 
 
