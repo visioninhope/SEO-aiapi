@@ -9,7 +9,7 @@ from src.documents.utils import rag_topic_to_answer, chat_to_answer
 from src.utils import init_db
 import logging
 
-async def article_create_one(keyword: str, article_parameter: ArticleParameter, tries: int = 6):
+async def article_create_one(keyword: str, article_option_name: str, article_parameter: ArticleParameter, tries: int = 6):
     for i in range(tries):
         try:
             logging.warning("Start generating article - " + keyword)
@@ -42,7 +42,7 @@ async def article_create_one(keyword: str, article_parameter: ArticleParameter, 
                     content += "\n\n## " + section.get("heading") + "\n\n" + conclusion
                 else:
                     topic = "## " + section.get("heading") + "\n\n" + section.get("content")
-                    p_prompt = article_parameter.paragraph_prompt + """\nFinally, output the section by standard markdown format."""
+                    p_prompt = article_parameter.paragraph_prompt + """\nFinally, content must be output in markdown format."""
                     p = await rag_topic_to_answer(topic,
                                                   p_prompt,
                                                   article_parameter.paragraph_model,
@@ -57,6 +57,7 @@ async def article_create_one(keyword: str, article_parameter: ArticleParameter, 
             # 生成的文章存入数据库
             await init_db(settings.db_name, [Article])
             article = Article(keyword=keyword,
+                              article_option_name=article_option_name,
                               article_parameter=article_parameter,
                               content=content,
                               outline=outline.get("answer"),

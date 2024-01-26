@@ -41,7 +41,7 @@ async def articles_create(data: ArticleCreateIn, background_tasks: BackgroundTas
     await init_db(settings.db_name, [ArticleOption])
     article_option = await ArticleOption.find_one(ArticleOption.id == ObjectId(data.article_option_id))
     for keyword in data.keywords.splitlines():
-        background_tasks.add_task(article_create_one, keyword, article_option.parameter)
+        background_tasks.add_task(article_create_one, keyword, article_option.name, article_option.parameter)
 
     return {"message": "The article has started to be generated, please wait for a while and refresh the page."}
 

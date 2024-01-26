@@ -32,6 +32,7 @@ class ArticleTypeEnum(str, Enum):
 class Article(Document):
     keyword: Annotated[str, Indexed(index_type=pymongo.TEXT)]
     type: Optional[ArticleTypeEnum] = None
+    article_option_name: Optional[str] = None
     create_date: datetime = datetime.now()
     article_parameter: Optional[ArticleParameter] = None
     outline: dict | None = None
