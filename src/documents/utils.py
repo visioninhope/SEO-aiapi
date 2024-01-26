@@ -1,5 +1,7 @@
 # non-business logic functions, e.g. response normalization, data enrichment, etc.
 import os
+import traceback
+
 import chromadb
 from langchain.retrievers import MultiQueryRetriever, ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import CohereRerank
@@ -99,8 +101,7 @@ async def rag_topic_to_answer(topic: str,
                                                                                                       "fetch_k": fetch_k,
                                                                                                       "k": k})
 
-    llm_for_multi_query = ChatOpenAI(openai_api_key=settings.ai_transit_openai_api_key,
-                                     openai_api_base=settings.ai_transit_openai_api_base)
+    llm_for_multi_query = ChatOpenAI(openai_api_key=settings.ai_openai_api_key)
     if llm_model_name == ModelNameEnum.gemini_pro:
         llm = GoogleGenerativeAI(model="gemini-pro", max_output_tokens=2048)
     else:
@@ -168,6 +169,7 @@ async def rag_and_save(data: RagIn):
         return result
     except Exception as e:
         logging.error(str(e))
+        traceback.print_exc(file=open(settings.log_file, "a"))
 
     return None
 
@@ -236,6 +238,7 @@ async def chat_and_save(chat_in_data: ChatIn, tries: int = 6):
             return True
         except Exception as e:
             logging.error(str(e))
+            traceback.print_exc(file=open(settings.log_file, "a"))
             if i > tries - 1:
                 logging.error("Chat generation failed - " + chat_in_data.human_1)
 

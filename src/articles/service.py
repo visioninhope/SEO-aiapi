@@ -1,5 +1,6 @@
 # module specific business logic
 import json
+import traceback
 
 from src.articles.models import ArticleParameter, Article
 from src.config import settings
@@ -29,9 +30,9 @@ async def article_create_one(keyword: str, article_parameter: ArticleParameter, 
             outline_sections = outline.get("answer").get("sections")
             paragraph_contexts = []
             for section in outline_sections:
-                if section == outline_sections[0] and section.get("heading").startswith("Introduction"):
+                if section == outline_sections[0]:
                     human_1="I will provide you with the blog outline in json format. Write an Introduction of the article within 100 words based on the outline. Output content only.\n\noutline:\n" + json.dumps(
-                            outline.get("answer"))
+                            outline.get("answer")) + "\n\nIntroduction topic:\n" + section.get("heading")
                     introduction = await chat_to_answer(human_1=human_1)
                     content += "\n\n## " + section.get("heading") + "\n\n" + introduction
                 elif section == outline_sections[-1] and section.get("heading").startswith("Conclusion"):
@@ -67,6 +68,7 @@ async def article_create_one(keyword: str, article_parameter: ArticleParameter, 
             return article
         except Exception as e:
             logging.error(str(e))
-            if i > tries - 1:
+            traceback.print_exc(file=open(settings.log_file,"a"))
+            if i == tries - 1:
                 logging.error("Article generation failed - " + keyword)
 

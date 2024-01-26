@@ -1,5 +1,7 @@
 # 主程序入口
 import http
+import traceback
+
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -29,6 +31,7 @@ async def add_ip_filter_middleware(request: Request, call_next):
 @app.exception_handler(Exception)
 async def validation_exception_handler(request: Request, e: Exception):
     logging.error(str(e))
+    traceback.print_exc(file=open(settings.log_file, "a"))
     return JSONResponse(status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR, content={'message': str(e)})
 
 app.include_router(articles_router.router)
