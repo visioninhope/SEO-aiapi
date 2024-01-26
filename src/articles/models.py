@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field
 from src.config import settings
 from src.documents.schemas import RetrieverTypeEnum, ModelNameEnum
 
-
 class ArticleParameter(BaseModel):
     outline_prompt: str = Field(max_length=2000)
     outline_model: ModelNameEnum = ModelNameEnum.gemini_pro
@@ -35,10 +34,10 @@ class Article(Document):
     type: Optional[ArticleTypeEnum] = None
     create_date: datetime = datetime.now()
     article_parameter: Optional[ArticleParameter] = None
-    outline: str | None = None
+    outline: dict | None = None
     content: str
-    outline_context: str | None = None
-    paragraph_context: str | None = None
+    outline_context: list[dict] | None = None
+    paragraph_context: list[dict] | None = None
 
     class Settings:
         name = "articles"

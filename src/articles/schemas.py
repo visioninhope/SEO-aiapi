@@ -8,11 +8,14 @@ class ArticleDeleteIn(BaseModel):
     id: str # 变量为_id会无效
     db_name: str | None = None
 
+
+# 文章批量生成输入参数
 class ArticleCreateIn(BaseModel):
-    keyword: str
-    article_parameter: ArticleParameter
+    keywords: str # 按行分开的关键词
+    article_option_id: str # 文章配置的id
 
 
+# 文章参数生成
 class ArticleOptionCreateIn(BaseModel):
     name: str
     parameter: ArticleParameter

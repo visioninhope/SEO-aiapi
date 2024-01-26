@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 
-@router.get("/",
+@router.get("",
             response_model=DocumentListOut,
             summary='获取资料列表',
             description='获取可选数据库列表，否定词列表，该数据库已录入总数')

@@ -78,7 +78,7 @@ class RagIn(BaseModel):
     k: int = settings.rag_default_k
 
 
-# Chat生成输入参数
+# 1问1答Chat生成测试输入参数
 class ChatIn(BaseModel):
     human_1: str
     llm_model_name: ModelNameEnum = ModelNameEnum.gemini_pro

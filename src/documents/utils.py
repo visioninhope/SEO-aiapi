@@ -173,34 +173,39 @@ async def rag_and_save(data: RagIn):
 
 
 # 常规chat对话
-async def chat_to_answer(chat_in_data: ChatIn):
+async def chat_to_answer(human_1: str,
+                         llm_model_name: ModelNameEnum = ModelNameEnum.gemini_pro,
+                         temperature: float = 0.7,
+                         system_message_prompt: str | None = "",
+                         ai_1: str | None = "",
+                         human_2: str | None = ""):
     full_messages = [
-        ("system", chat_in_data.system_message_prompt),
-        ("human", chat_in_data.human_1),
-        ("ai", chat_in_data.ai_1),
+        ("system", system_message_prompt),
+        ("human", human_1),
+        ("ai", ai_1),
         ("human", "{user_input}"),
     ]
     # 模型切换
-    if chat_in_data.llm_model_name == ModelNameEnum.gemini_pro:
+    if llm_model_name == ModelNameEnum.gemini_pro:
         llm = GoogleGenerativeAI(model="gemini-pro", max_output_tokens=2048)
         # gemini模型没有system prompt，2轮对话分割点也得变
         full_messages.pop(0)
     else:
-        llm = ChatOpenAI(model_name=chat_in_data.llm_model_name, request_timeout=300,
+        llm = ChatOpenAI(model_name=llm_model_name, request_timeout=300, temperature=temperature,
                          openai_api_key=settings.ai_transit_openai_api_key,
                          openai_api_base=settings.ai_transit_openai_api_base)
 
     # 有ai_1就是2轮对话，1轮与2轮间切换
-    if chat_in_data.ai_1:
+    if ai_1:
         chat_template = ChatPromptTemplate.from_messages(
             full_messages
         )
-        user_input = chat_in_data.human_2
+        user_input = human_2
     else:
         chat_template = ChatPromptTemplate.from_messages(
             full_messages[-1]
         )
-        user_input = chat_in_data.human_1
+        user_input = human_1
 
     output_parser = StrOutputParser()
     chain = (
@@ -218,16 +223,19 @@ async def chat_to_answer(chat_in_data: ChatIn):
 async def chat_and_save(chat_in_data: ChatIn, tries: int = 6):
     for i in range(tries):
         try:
-            answer = await chat_to_answer(chat_in_data)
+            answer = await chat_to_answer(chat_in_data.human_1, chat_in_data.llm_model_name, chat_in_data.temperature,chat_in_data.system_message_prompt, chat_in_data.ai_1, chat_in_data.human_2)
 
             await init_db(settings.db_name, [AdventureChat])
-            db_data = AdventureChat(system_message_prompt=chat_in_data.system_message_prompt, human_1=chat_in_data.human_1,
+            db_data = AdventureChat(system_message_prompt=chat_in_data.system_message_prompt,
+                                    human_1=chat_in_data.human_1,
                                     ai_1=chat_in_data.ai_1,
-                                    human_2=chat_in_data.human_2, answer=answer, llm_model_name=chat_in_data.llm_model_name,
+                                    human_2=chat_in_data.human_2, answer=answer,
+                                    llm_model_name=chat_in_data.llm_model_name,
                                     temperature=chat_in_data.temperature, create_date=datetime.now())
             await db_data.insert()
             return True
         except Exception as e:
             logging.error(str(e))
             if i > tries - 1:
-                raise
+                logging.error("Chat generation failed - " + chat_in_data.human_1)
+

@@ -2,7 +2,7 @@ from fastapi import APIRouter, BackgroundTasks
 from .models import AdventureRag, AdventureChat
 from ..config import settings
 from ..documents.schemas import RagIn, ParserEnum, RetrieverTypeEnum, ModelNameEnum, ChatIn
-from ..documents.utils import rag_and_save, chat_to_answer, chat_and_save
+from ..documents.utils import rag_and_save, chat_and_save
 from ..utils import init_db
 
 router = APIRouter(
@@ -83,8 +83,3 @@ async def chat_list(skip: int = 0,
 async def chat_post(chat_in_data: ChatIn, background_tasks: BackgroundTasks):
     background_tasks.add_task(chat_and_save, chat_in_data, 6)
     return {"message": "Task has been added to the queue."}
-
-@router.post("/test", summary="临时测试各种功能")
-async def test(data: ChatIn):
-    result = await chat_to_answer(data)
-    return result
