@@ -1,6 +1,7 @@
 # module specific business logic
 import json
 import traceback
+from datetime import datetime
 
 from src.articles.models import ArticleParameter, Article
 from src.config import settings
@@ -59,6 +60,7 @@ async def article_create_one(keyword: str, article_option_name: str, article_par
             article = Article(keyword=keyword,
                               article_option_name=article_option_name,
                               article_parameter=article_parameter,
+                              create_date=datetime.now(),
                               content=content,
                               outline=outline.get("answer"),
                               outline_context=outline_context_dict,
