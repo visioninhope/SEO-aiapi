@@ -13,7 +13,7 @@ import logging
 async def article_create_one(keyword: str, article_option_name: str, article_parameter: ArticleParameter, tries: int = 6):
     for i in range(tries):
         try:
-            logging.warning("Start generating article - " + keyword)
+            logging.warning("generating article starts - " + keyword)
 
             # 大纲生成，大纲必须规范结果为合适的json
             outline_prompt = article_parameter.outline_prompt + """\nFinally, output the outline by JSON object structured like:{{"title": "", "sections": [{{"heading": "", "content":""}}]}}"""
@@ -66,7 +66,7 @@ async def article_create_one(keyword: str, article_option_name: str, article_par
                               outline_context=outline_context_dict,
                               paragraph_context=paragraph_context_dict)
             await article.insert()
-            logging.warning("Article generated and stored successfully - " + keyword)
+            logging.warning("generating article finish - " + keyword)
 
             return article
         except Exception as e:
