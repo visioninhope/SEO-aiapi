@@ -10,7 +10,7 @@ from src.documents.utils import rag_topic_to_answer, chat_to_answer
 from src.utils import init_db
 import logging
 
-async def article_create_one(keyword: str, article_option_name: str, article_parameter: ArticleParameter, tries: int = 6):
+async def article_create_one_by_chroma(keyword: str, article_option_name: str, article_parameter: ArticleParameter, tries: int = 6):
     for i in range(tries):
         try:
             logging.warning("generating article starts - " + keyword)

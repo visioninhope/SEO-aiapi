@@ -1,8 +1,8 @@
 from fastapi import APIRouter, BackgroundTasks
 from .models import AdventureRag, AdventureChat
+from .service import rag_and_save, chat_and_save
 from ..config import settings
 from ..documents.schemas import RagIn, ParserEnum, RetrieverTypeEnum, ModelNameEnum, ChatIn
-from ..documents.utils import rag_and_save, chat_and_save
 from ..utils import init_db
 
 router = APIRouter(
